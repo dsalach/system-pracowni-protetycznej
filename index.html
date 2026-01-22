@@ -13,6 +13,1651 @@
     <div id="root"></div>
     <script type="text/babel">
         // TUTAJ WKLEJ CAŁY KOD - DAM CI GO W NASTĘPNEJ WIADOMOŚCI
+        import React, { useState, useEffect } from 'react';
+import { Calendar, Users, FileText, Package, DollarSign, Clock, ChevronRight, Plus, Search, Edit, Trash2, Check, X, Download, Upload, AlertTriangle, Bell } from 'lucide-react';
+
+const DentalLabSystem = () => {
+  const CURRENT_VERSION = '1.0.0';
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [orders, setOrders] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [prosthetics, setProsthetics] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [declarations, setDeclarations] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('');
+  const [editItem, setEditItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [notification, setNotification] = useState(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(null);
+  const [sortBy, setSortBy] = useState('date');
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+  };
+
+  const loadAllData = async () => {
+    const dataKeys = ['orders', 'doctors', 'prosthetics', 'employees', 'suppliers', 'invoices', 'declarations', 'systemVersion'];
+    const loadedData = {};
+
+    for (const key of dataKeys) {
+      try {
+        const result = await window.storage.get(key);
+        loadedData[key] = result?.value ? JSON.parse(result.value) : null;
+      } catch (error) {
+        loadedData[key] = null;
+      }
+    }
+
+    const needsMigration = !loadedData.systemVersion || loadedData.systemVersion !== CURRENT_VERSION;
+
+    if (needsMigration) {
+      await migrateData(loadedData);
+    }
+
+    setOrders(loadedData.orders || []);
+    setDoctors(loadedData.doctors || []);
+    setProsthetics(loadedData.prosthetics || []);
+    setEmployees(loadedData.employees || []);
+    setSuppliers(loadedData.suppliers || []);
+    setInvoices(loadedData.invoices || []);
+    setDeclarations(loadedData.declarations || []);
+
+    if (!loadedData.prosthetics || loadedData.prosthetics.length === 0) {
+      await initializeDefaultData();
+    }
+
+    setInitialized(true);
+  };
+
+  const migrateData = async (data) => {
+    console.log('Migracja danych do wersji:', CURRENT_VERSION);
+    await window.storage.set('systemVersion', JSON.stringify(CURRENT_VERSION));
+  };
+
+  const initializeDefaultData = async () => {
+    const defaultProsthetics = [
+      { id: Date.now(), name: 'Korona porcelanowa', gmlcCode: 'GMLC-001', minDays: 7, price: 450, stages: ['Odlew', 'Szlifowanie', 'Porcelana', 'Glazura'] },
+      { id: Date.now() + 1, name: 'Most 3-punktowy', gmlcCode: 'GMLC-002', minDays: 10, price: 1200, stages: ['Odlew', 'Szlifowanie', 'Porcelana', 'Polerowanie'] },
+      { id: Date.now() + 2, name: 'Proteza akrylowa', gmlcCode: 'GMLC-003', minDays: 14, price: 800, stages: ['Wycisk', 'Model', 'Ustawienie', 'Polimeryzacja'] }
+    ];
+
+    setProsthetics(defaultProsthetics);
+    await saveData('prosthetics', defaultProsthetics);
+    showNotification('Zainicjalizowano bazę przykładowych uzupełnień. Możesz je edytować lub dodać własne.', 'info');
+  };
+
+  const saveData = async (key, data) => {
+    try {
+      const result = await window.storage.set(key, JSON.stringify(data));
+      if (!result) {
+        throw new Error('Zapis nie powiódł się');
+      }
+      return true;
+    } catch (error) {
+      showNotification(`Błąd zapisu danych: ${error.message}`, 'error');
+      return false;
+    }
+  };
+
+  const addOrder = async (orderData) => {
+    const prosthetic = prosthetics.find(p => p.id === orderData.prostheticId);
+    const teethCount = orderData.teethNumbers.split(',').filter(t => t.trim()).length || 1;
+    const totalPrice = prosthetic.price * teethCount;
+
+    const newOrder = {
+      id: Date.now(),
+      ...orderData,
+      status: 'Nowe',
+      totalPrice,
+      teethCount,
+      createdAt: new Date().toISOString(),
+      createdBy: 'Właściciel',
+      stages: prosthetic?.stages || [],
+      stageProgress: prosthetic?.stages.map(() => ({ assignedTo: '', status: 'Nierozpoczęty', startedAt: null, completedAt: null })) || []
+    };
+    const updated = [...orders, newOrder];
+    setOrders(updated);
+    const success = await saveData('orders', updated);
+    if (success) showNotification('Zlecenie zostało dodane pomyślnie');
+  };
+
+  const updateOrder = async (id, orderData) => {
+    const prosthetic = prosthetics.find(p => p.id === orderData.prostheticId);
+    const teethCount = orderData.teethNumbers.split(',').filter(t => t.trim()).length || 1;
+    const totalPrice = prosthetic.price * teethCount;
+
+    const updated = orders.map(order => 
+      order.id === id ? { 
+        ...order, 
+        ...orderData, 
+        totalPrice, 
+        teethCount,
+        modifiedAt: new Date().toISOString() 
+      } : order
+    );
+    setOrders(updated);
+    const success = await saveData('orders', updated);
+    if (success) showNotification('Zlecenie zostało zaktualizowane');
+  };
+
+  const deleteOrder = async (id) => {
+    const updated = orders.filter(order => order.id !== id);
+    setOrders(updated);
+    const success = await saveData('orders', updated);
+    if (success) showNotification('Zlecenie zostało usunięte');
+    setShowConfirmDelete(null);
+  };
+
+  const updateOrderStage = async (orderId, stageIndex, assignedTo, status) => {
+    const updated = orders.map(order => {
+      if (order.id === orderId) {
+        const newStages = [...order.stageProgress];
+        const currentStage = newStages[stageIndex] || {};
+        newStages[stageIndex] = { 
+          ...currentStage,
+          assignedTo, 
+          status,
+          startedAt: !currentStage.startedAt && status === 'W trakcie' ? new Date().toISOString() : currentStage.startedAt,
+          completedAt: status === 'Zakończony' ? new Date().toISOString() : null 
+        };
+        return { ...order, stageProgress: newStages, modifiedAt: new Date().toISOString() };
+      }
+      return order;
+    });
+    setOrders(updated);
+    await saveData('orders', updated);
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    const updated = orders.map(order => 
+      order.id === orderId ? { 
+        ...order, 
+        status: newStatus, 
+        statusChangedAt: new Date().toISOString(),
+        ...(newStatus === 'Zakończone' ? { completedAt: new Date().toISOString() } : {})
+      } : order
+    );
+    setOrders(updated);
+    const success = await saveData('orders', updated);
+    if (success) showNotification(`Status zmieniony na: ${newStatus}`);
+  };
+
+  const generateInvoice = async (orderId) => {
+    const order = orders.find(o => o.id === orderId);
+    const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
+    const doctor = doctors.find(d => d.id === order.doctorId);
+    
+    const year = new Date().getFullYear();
+    const yearInvoices = invoices.filter(inv => inv.invoiceNumber.startsWith(`FV/${year}/`));
+    const nextNumber = yearInvoices.length + 1;
+    
+    const invoice = {
+      id: Date.now(),
+      orderId,
+      invoiceNumber: `FV/${year}/${String(nextNumber).padStart(4, '0')}`,
+      doctor: doctor?.name,
+      doctorId: doctor?.id,
+      prostheticName: prosthetic?.name,
+      teethNumbers: order.teethNumbers,
+      teethCount: order.teethCount,
+      unitPrice: prosthetic?.price,
+      amount: order.totalPrice,
+      issueDate: new Date().toISOString(),
+      status: 'Wystawiona',
+      createdBy: 'Właściciel'
+    };
+    
+    const updated = [...invoices, invoice];
+    setInvoices(updated);
+    const success = await saveData('invoices', updated);
+    if (success) showNotification('Faktura została wystawiona');
+  };
+
+  const generateDeclaration = async (orderId) => {
+    const order = orders.find(o => o.id === orderId);
+    const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
+    const doctor = doctors.find(d => d.id === order.doctorId);
+    
+    const declaration = {
+      id: Date.now(),
+      orderId,
+      declarationNumber: `OSW/${new Date().getFullYear()}/${declarations.length + 1}`,
+      patientCode: order.patientCode,
+      doctorName: doctor?.name,
+      prostheticName: prosthetic?.name,
+      gmlcCode: prosthetic?.gmlcCode,
+      teethNumbers: order.teethNumbers,
+      material: order.material,
+      issueDate: new Date().toISOString(),
+      completionDate: order.completedAt
+    };
+    
+    const updated = [...declarations, declaration];
+    setDeclarations(updated);
+    const success = await saveData('declarations', updated);
+    if (success) showNotification('Oświadczenie zostało wygenerowane');
+  };
+
+  const addDoctor = async (doctorData) => {
+    const newDoctor = { id: Date.now(), ...doctorData };
+    const updated = [...doctors, newDoctor];
+    setDoctors(updated);
+    const success = await saveData('doctors', updated);
+    if (success) showNotification('Lekarz został dodany');
+  };
+
+  const updateDoctor = async (id, doctorData) => {
+    const updated = doctors.map(doc => doc.id === id ? { ...doc, ...doctorData } : doc);
+    setDoctors(updated);
+    const success = await saveData('doctors', updated);
+    if (success) showNotification('Dane lekarza zaktualizowane');
+  };
+
+  const deleteDoctor = async (id) => {
+    const hasOrders = orders.some(o => o.doctorId === id);
+    if (hasOrders) {
+      showNotification('Nie można usunąć lekarza z przypisanymi zleceniami', 'error');
+      setShowConfirmDelete(null);
+      return;
+    }
+    const updated = doctors.filter(doc => doc.id !== id);
+    setDoctors(updated);
+    const success = await saveData('doctors', updated);
+    if (success) showNotification('Lekarz został usunięty');
+    setShowConfirmDelete(null);
+  };
+
+  const addProsthetic = async (prostheticData) => {
+    const newProsthetic = { id: Date.now(), ...prostheticData };
+    const updated = [...prosthetics, newProsthetic];
+    setProsthetics(updated);
+    const success = await saveData('prosthetics', updated);
+    if (success) showNotification('Uzupełnienie zostało dodane');
+  };
+
+  const updateProsthetic = async (id, prostheticData) => {
+    const updated = prosthetics.map(pros => pros.id === id ? { ...pros, ...prostheticData } : pros);
+    setProsthetics(updated);
+    const success = await saveData('prosthetics', updated);
+    if (success) showNotification('Uzupełnienie zaktualizowane');
+  };
+
+  const deleteProsthetic = async (id) => {
+    const hasOrders = orders.some(o => o.prostheticId === id);
+    if (hasOrders) {
+      showNotification('Nie można usunąć uzupełnienia z przypisanymi zleceniami', 'error');
+      setShowConfirmDelete(null);
+      return;
+    }
+    const updated = prosthetics.filter(pros => pros.id !== id);
+    setProsthetics(updated);
+    const success = await saveData('prosthetics', updated);
+    if (success) showNotification('Uzupełnienie zostało usunięte');
+    setShowConfirmDelete(null);
+  };
+
+  const addEmployee = async (employeeData) => {
+    const newEmployee = { id: Date.now(), ...employeeData };
+    const updated = [...employees, newEmployee];
+    setEmployees(updated);
+    const success = await saveData('employees', updated);
+    if (success) showNotification('Pracownik został dodany');
+  };
+
+  const updateEmployee = async (id, employeeData) => {
+    const updated = employees.map(emp => emp.id === id ? { ...emp, ...employeeData } : emp);
+    setEmployees(updated);
+    const success = await saveData('employees', updated);
+    if (success) showNotification('Dane pracownika zaktualizowane');
+  };
+
+  const deleteEmployee = async (id) => {
+    const updated = employees.filter(emp => emp.id !== id);
+    setEmployees(updated);
+    const success = await saveData('employees', updated);
+    if (success) showNotification('Pracownik został usunięty');
+    setShowConfirmDelete(null);
+  };
+
+  const addSupplier = async (supplierData) => {
+    const newSupplier = { id: Date.now(), ...supplierData };
+    const updated = [...suppliers, newSupplier];
+    setSuppliers(updated);
+    const success = await saveData('suppliers', updated);
+    if (success) showNotification('Dostawca został dodany');
+  };
+
+  const updateSupplier = async (id, supplierData) => {
+    const updated = suppliers.map(sup => sup.id === id ? { ...sup, ...supplierData } : sup);
+    setSuppliers(updated);
+    const success = await saveData('suppliers', updated);
+    if (success) showNotification('Dane dostawcy zaktualizowane');
+  };
+
+  const deleteSupplier = async (id) => {
+    const updated = suppliers.filter(sup => sup.id !== id);
+    setSuppliers(updated);
+    const success = await saveData('suppliers', updated);
+    if (success) showNotification('Dostawca został usunięty');
+    setShowConfirmDelete(null);
+  };
+
+  const exportData = () => {
+    const exportObj = {
+      version: CURRENT_VERSION,
+      exportDate: new Date().toISOString(),
+      orders,
+      doctors,
+      prosthetics,
+      employees,
+      suppliers,
+      invoices,
+      declarations
+    };
+    const dataStr = JSON.stringify(exportObj, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dental-lab-backup-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    showNotification('Dane zostały wyeksportowane');
+  };
+
+  const importData = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        
+        if (imported.orders) { setOrders(imported.orders); await saveData('orders', imported.orders); }
+        if (imported.doctors) { setDoctors(imported.doctors); await saveData('doctors', imported.doctors); }
+        if (imported.prosthetics) { setProsthetics(imported.prosthetics); await saveData('prosthetics', imported.prosthetics); }
+        if (imported.employees) { setEmployees(imported.employees); await saveData('employees', imported.employees); }
+        if (imported.suppliers) { setSuppliers(imported.suppliers); await saveData('suppliers', imported.suppliers); }
+        if (imported.invoices) { setInvoices(imported.invoices); await saveData('invoices', imported.invoices); }
+        if (imported.declarations) { setDeclarations(imported.declarations); await saveData('declarations', imported.declarations); }
+        
+        showNotification('Dane zostały zaimportowane pomyślnie');
+      } catch (error) {
+        showNotification('Błąd importu danych: ' + error.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const getUrgentOrders = () => {
+    const today = new Date();
+    const threeDays = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+    return orders.filter(o => {
+      if (o.status === 'Zakończone') return false;
+      const deadline = new Date(o.deadline);
+      return deadline <= threeDays;
+    });
+  };
+
+  const Dashboard = () => {
+    const activeOrders = orders.filter(o => o.status !== 'Zakończone').length;
+    const urgentOrders = getUrgentOrders();
+    const completedThisMonth = orders.filter(o => {
+      if (!o.completedAt) return false;
+      const completed = new Date(o.completedAt);
+      const now = new Date();
+      return completed.getMonth() === now.getMonth() && completed.getFullYear() === now.getFullYear();
+    }).length;
+    const revenue = invoices.filter(inv => {
+      const invDate = new Date(inv.issueDate);
+      const now = new Date();
+      return invDate.getMonth() === now.getMonth() && invDate.getFullYear() === now.getFullYear();
+    }).reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+    return (
+      <div className="p-6">
+        <h1 className="text-3xl font-bold mb-6">Panel główny</h1>
+        
+        {urgentOrders.length > 0 && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div className="flex items-center">
+              <AlertTriangle className="text-red-500 mr-3" size={24} />
+              <div>
+                <h3 className="font-semibold text-red-800">Pilne zlecenia: {urgentOrders.length}</h3>
+                <p className="text-sm text-red-700">Zlecenia z terminem w ciągu najbliższych 3 dni</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600">Aktywne zlecenia</p>
+                <p className="text-3xl font-bold text-blue-900">{activeOrders}</p>
+              </div>
+              <Package className="text-blue-500" size={40} />
+            </div>
+          </div>
+          <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-red-600">Pilne zlecenia</p>
+                <p className="text-3xl font-bold text-red-900">{urgentOrders.length}</p>
+              </div>
+              <Bell className="text-red-500" size={40} />
+            </div>
+          </div>
+          <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-600">Ukończone (m-c)</p>
+                <p className="text-3xl font-bold text-green-900">{completedThisMonth}</p>
+              </div>
+              <Check className="text-green-500" size={40} />
+            </div>
+          </div>
+          <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-purple-600">Przychód (m-c)</p>
+                <p className="text-3xl font-bold text-purple-900">{revenue.toFixed(2)}</p>
+              </div>
+              <DollarSign className="text-purple-500" size={40} />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg border p-6">
+          <h2 className="text-xl font-semibold mb-4">Ostatnie zlecenia</h2>
+          <div className="space-y-2">
+            {orders.slice(-5).reverse().map(order => {
+              const doctor = doctors.find(d => d.id === order.doctorId);
+              const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
+              const isUrgent = new Date(order.deadline) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+              return (
+                <div key={order.id} className={`flex justify-between items-center p-3 rounded ${isUrgent && order.status !== 'Zakończone' ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
+                  <div>
+                    <p className="font-medium">{prosthetic?.name || 'Nieznany typ'}</p>
+                    <p className="text-sm text-gray-600">{doctor?.name} - Pacjent: {order.patientCode}</p>
+                    <p className="text-xs text-gray-500">Termin: {new Date(order.deadline).toLocaleDateString('pl-PL')}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded text-sm ${
+                    order.status === 'Zakończone' ? 'bg-green-100 text-green-800' : 
+                    order.status === 'Przymiarka' ? 'bg-yellow-100 text-yellow-800' :
+                    order.status === 'Poprawki' ? 'bg-orange-100 text-orange-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {order.status}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const OrdersView = () => {
+    const filteredOrders = orders.filter(order => {
+      if (!searchTerm) return true;
+      const doctor = doctors.find(d => d.id === order.doctorId);
+      const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        order.patientCode.toLowerCase().includes(searchLower) ||
+        doctor?.name.toLowerCase().includes(searchLower) ||
+        prosthetic?.name.toLowerCase().includes(searchLower) ||
+        order.status.toLowerCase().includes(searchLower)
+      );
+    });
+
+    const sortedOrders = [...filteredOrders].sort((a, b) => {
+      if (sortBy === 'date') return new Date(b.createdAt) - new Date(a.createdAt);
+      if (sortBy === 'deadline') return new Date(a.deadline) - new Date(b.deadline);
+      if (sortBy === 'status') return a.status.localeCompare(b.status);
+      return 0;
+    });
+
+    return (
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Zlecenia</h1>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => { setModalType('order'); setEditItem(null); setShowModal(true); }}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            >
+              <Plus size={20} /> Nowe zlecenie
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Szukaj po pacjencie, lekarzu, typie..."
+              className="w-full border rounded-lg px-4 py-2"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <select 
+            className="border rounded-lg px-4 py-2"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="date">Sortuj: Data dodania</option>
+            <option value="deadline">Sortuj: Termin</option>
+            <option value="status">Sortuj: Status</option>
+          </select>
+        </div>
+        
+        <div className="space-y-4">
+          {sortedOrders.map(order => {
+            const doctor = doctors.find(d => d.id === order.doctorId);
+            const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
+            const isOverdue = new Date(order.deadline) < new Date() && order.status !== 'Zakończone';
+            return (
+              <div key={order.id} className={`bg-white rounded-lg border p-6 ${isOverdue ? 'border-red-500 border-2' : ''}`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold">{prosthetic?.name}</h3>
+                    <p className="text-gray-600">Lekarz: {doctor?.name}</p>
+                    <p className="text-gray-600">Pacjent: {order.patientCode}</p>
+                    <p className="text-gray-600">Zęby: {order.teethNumbers} (ilość: {order.teethCount})</p>
+                    <p className="text-gray-600">Materiał: {order.material}</p>
+                    <p className="text-sm text-gray-500">Termin: {new Date(order.deadline).toLocaleDateString('pl-PL')}</p>
+                    <p className="text-sm text-gray-500">Cena: {order.totalPrice} PLN</p>
+                    {isOverdue && <p className="text-red-600 font-semibold">PRZEKROCZONY TERMIN!</p>}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <select
+                      className="border rounded px-3 py-1 text-sm"
+                      value={order.status}
+                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                    >
+                      <option value="Nowe">Nowe</option>
+                      <option value="W realizacji">W realizacji</option>
+                      <option value="Przymiarka">Przymiarka</option>
+                      <option value="Poprawki">Poprawki</option>
+                      <option value="Gotowe do odbioru">Gotowe do odbioru</option>
+                      <option value="Zakończone">Zakończone</option>
+                    </select>
+                    <button 
+                      onClick={() => { setEditItem(order); setModalType('order'); setShowModal(true); }}
+                      className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-sm"
+                    >
+                      <Edit size={16} className="inline mr-1" /> Edytuj
+                    </button>
+                    {order.status === 'Zakończone' && !invoices.find(inv => inv.orderId === order.id) && (
+                      <button 
+                        onClick={() => generateInvoice(order.id)}
+                        className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
+                      >
+                        Wystaw fakturę
+                      </button>
+                    )}
+                    {order.status === 'Zakończone' && !declarations.find(dec => dec.orderId === order.id) && (
+                      <button 
+                        onClick={() => generateDeclaration(order.id)}
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+                      >
+                        Oświadczenie
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => setShowConfirmDelete({ type: 'order', id: order.id })}
+                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
+                    >
+                      <Trash2 size={16} className="inline mr-1" /> Usuń
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-2">Etapy realizacji:</h4>
+                  <div className="space-y-2">
+                    {order.stages?.map((stage, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                        <span className="font-medium">{stage}</span>
+                        <div className="flex items-center gap-2">
+                          <select 
+                            className="border rounded px-2 py-1 text-sm"
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const current = order.stageProgress?.[idx];
+                              updateOrderStage(order.id, idx, value, current?.status || 'W trakcie');
+                            }}
+                            value={order.stageProgress?.[idx]?.assignedTo || ''}
+                          >
+                            <option value="">Przypisz...</option>
+                            {employees.map(emp => (
+                              <option key={emp.id} value={emp.name}>{emp.name}</option>
+                            ))}
+                            {suppliers.map(sup => (
+                              <option key={sup.id} value={`${sup.name} (dostawca)`}>{sup.name} (dostawca)</option>
+                            ))}
+                          </select>
+                          <select
+                            className="border rounded px-2 py-1 text-sm"
+                            value={order.stageProgress?.[idx]?.status || 'Nierozpoczęty'}
+                            onChange={(e) => updateOrderStage(order.id, idx, order.stageProgress?.[idx]?.assignedTo, e.target.value)}
+                          >
+                            <option value="Nierozpoczęty">Nierozpoczęty</option>
+                            <option value="W trakcie">W trakcie</option>
+                            <option value="Zakończony">Zakończony</option>
+                          </select>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            order.stageProgress?.[idx]?.status === 'Zakończony' 
+                              ? 'bg-green-100 text-green-800' 
+                              : order.stageProgress?.[idx]?.status === 'W trakcie'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-200'
+                          }`}>
+                            {order.stageProgress?.[idx]?.assignedTo || 'Nieprzypisany'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const OrderModal = ({ onClose, onSave }) => {
+    const [formData, setFormData] = useState(editItem || {
+      doctorId: '',
+      patientCode: '',
+      prostheticId: '',
+      deadline: '',
+      teethNumbers: '',
+      material: '',
+      notes: ''
+    });
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+      const newErrors = {};
+      if (!formData.doctorId) newErrors.doctorId = 'Wybierz lekarza';
+      if (!formData.patientCode || formData.patientCode.trim().length < 3) newErrors.patientCode = 'Podaj kod pacjenta (min. 3 znaki)';
+      if (!formData.prostheticId) newErrors.prostheticId = 'Wybierz typ uzupełnienia';
+      if (!formData.deadline) newErrors.deadline = 'Ustaw termin realizacji';
+      if (!formData.teethNumbers) newErrors.teethNumbers = 'Podaj numery zębów';
+      if (!formData.material || formData.material.trim().length < 2) newErrors.material = 'Podaj materiał';
+
+      const prosthetic = prosthetics.find(p => p.id === formData.prostheticId);
+      if (prosthetic && formData.deadline) {
+        const minDate = new Date();
+        minDate.setDate(minDate.getDate() + prosthetic.minDays);
+        if (new Date(formData.deadline) < minDate) {
+          newErrors.deadline = `Termin za krótki! Minimalny czas: ${prosthetic.minDays} dni (${minDate.toLocaleDateString('pl-PL')})`;
+        }
+      }
+
+      const teethArray = formData.teethNumbers.split(',').map(t => parseInt(t.trim())).filter(n => !isNaN(n));
+      if (teethArray.some(n => n < 1 || n > 32)) {
+        newErrors.teethNumbers = 'Numery zębów muszą być w zakresie 1-32';
+      }
+
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSave = () => {
+      if (!validateForm()) {
+        showNotification('Popraw błędy w formularzu', 'error');
+        return;
+      }
+      if (editItem) {
+        onSave(editItem.id, formData);
+      } else {
+        onSave(formData);
+      }
+      onClose();
+    };
+
+    const handleProstheticChange = (prostheticId) => {
+      setFormData({...formData, prostheticId: parseInt(prostheticId)});
+      const prosthetic = prosthetics.find(p => p.id === parseInt(prostheticId));
+      if (prosthetic) {
+        const minDate = new Date();
+        minDate.setDate(minDate.getDate() + prosthetic.minDays);
+        const dateStr = minDate.toISOString().split('T')[0];
+        setFormData(prev => ({...prev, prostheticId: parseInt(prostheticId), deadline: dateStr}));
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <h2 className="text-2xl font-bold mb-4">{editItem ? 'Edytuj zlecenie' : 'Nowe zlecenie'}</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Lekarz *</label>
+              <select 
+                className={`w-full border rounded px-3 py-2 ${errors.doctorId ? 'border-red-500' : ''}`}
+                value={formData.doctorId}
+                onChange={(e) => setFormData({...formData, doctorId: parseInt(e.target.value)})}
+              >
+                <option value="">Wybierz lekarza</option>
+                {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+              {errors.doctorId && <p className="text-red-500 text-xs mt-1">{errors.doctorId}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Kod pacjenta *</label>
+              <input 
+                type="text" 
+                maxLength="100"
+                className={`w-full border rounded px-3 py-2 ${errors.patientCode ? 'border-red-500' : ''}`}
+                value={formData.patientCode}
+                onChange={(e) => setFormData({...formData, patientCode: e.target.value})}
+                placeholder="np. Jan Kowalski"
+              />
+              {errors.patientCode && <p className="text-red-500 text-xs mt-1">{errors.patientCode}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Typ uzupełnienia *</label>
+              <select 
+                className={`w-full border rounded px-3 py-2 ${errors.prostheticId ? 'border-red-500' : ''}`}
+                value={formData.prostheticId}
+                onChange={(e) => handleProstheticChange(e.target.value)}
+              >
+                <option value="">Wybierz typ</option>
+                {prosthetics.map(p => <option key={p.id} value={p.id}>{p.name} - {p.price} PLN (min. {p.minDays} dni)</option>)}
+              </select>
+              {errors.prostheticId && <p className="text-red-500 text-xs mt-1">{errors.prostheticId}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Termin realizacji *</label>
+              <input 
+                type="date" 
+                className={`w-full border rounded px-3 py-2 ${errors.deadline ? 'border-red-500' : ''}`}
+                value={formData.deadline}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+              />
+              {errors.deadline && <p className="text-red-500 text-xs mt-1">{errors.deadline}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Numery zębów * (oddzielone przecinkami)</label>
+              <input 
+                type="text" 
+                maxLength="100"
+                className={`w-full border rounded px-3 py-2 ${errors.teethNumbers ? 'border-red-500' : ''}`}
+                placeholder="np. 14, 15, 16"
+                value={formData.teethNumbers}
+                onChange={(e) => setFormData({...formData, teethNumbers: e.target.value})}
+              />
+              {errors.teethNumbers && <p className="text-red-500 text-xs mt-1">{errors.teethNumbers}</p>}
+              <p className="text-xs text-gray-500 mt-1">System 1-32 (ISO)</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Materiał *</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className={`w-full border rounded px-3 py-2 ${errors.material ? 'border-red-500' : ''}`}
+                value={formData.material}
+                onChange={(e) => setFormData({...formData, material: e.target.value})}
+                placeholder="np. Porcelana IPS e.max"
+              />
+              {errors.material && <p className="text-red-500 text-xs mt-1">{errors.material}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Uwagi</label>
+              <textarea 
+                className="w-full border rounded px-3 py-2"
+                maxLength="1000"
+                rows="3"
+                value={formData.notes}
+                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-6">
+            <button 
+              onClick={handleSave}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              {editItem ? 'Zapisz zmiany' : 'Dodaj zlecenie'}
+            </button>
+            <button 
+              onClick={onClose}
+              className="flex-1 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Anuluj
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const DoctorModal = ({ onClose, onSave }) => {
+    const [formData, setFormData] = useState(editItem || {
+      name: '',
+      specialty: '',
+      clinic: '',
+      phone: '',
+      email: ''
+    });
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+      const newErrors = {};
+      if (!formData.name || formData.name.trim().length < 3) newErrors.name = 'Podaj imię i nazwisko (min. 3 znaki)';
+      if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Nieprawidłowy format email';
+      if (formData.phone && !/^[\d\s\-\+()]{9,}$/.test(formData.phone)) newErrors.phone = 'Nieprawidłowy format telefonu';
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSave = () => {
+      if (!validateForm()) {
+        showNotification('Popraw błędy w formularzu', 'error');
+        return;
+      }
+      if (editItem) {
+        onSave(editItem.id, formData);
+      } else {
+        onSave(formData);
+      }
+      onClose();
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <h2 className="text-2xl font-bold mb-4">{editItem ? 'Edytuj lekarza' : 'Dodaj lekarza'}</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Imię i nazwisko *</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className={`w-full border rounded px-3 py-2 ${errors.name ? 'border-red-500' : ''}`}
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Specjalizacja</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className="w-full border rounded px-3 py-2"
+                value={formData.specialty}
+                onChange={(e) => setFormData({...formData, specialty: e.target.value})}
+                placeholder="np. Protetyka"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Gabinet/Klinika</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className="w-full border rounded px-3 py-2"
+                value={formData.clinic}
+                onChange={(e) => setFormData({...formData, clinic: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Telefon</label>
+              <input 
+                type="tel" 
+                maxLength="20"
+                className={`w-full border rounded px-3 py-2 ${errors.phone ? 'border-red-500' : ''}`}
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                placeholder="+48 123 456 789"
+              />
+              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input 
+                type="email" 
+                maxLength="200"
+                className={`w-full border rounded px-3 py-2 ${errors.email ? 'border-red-500' : ''}`}
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+              />
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+            </div>
+          </div>
+          <div className="flex gap-2 mt-6">
+            <button 
+              onClick={handleSave}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              {editItem ? 'Zapisz' : 'Dodaj'}
+            </button>
+            <button 
+              onClick={onClose}
+              className="flex-1 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Anuluj
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ProstheticModal = ({ onClose, onSave }) => {
+    const [formData, setFormData] = useState(editItem || {
+      name: '',
+      gmlcCode: '',
+      minDays: '',
+      price: '',
+      stages: []
+    });
+    const [stageInput, setStageInput] = useState('');
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+      const newErrors = {};
+      if (!formData.name || formData.name.trim().length < 3) newErrors.name = 'Podaj nazwę (min. 3 znaki)';
+      if (!formData.gmlcCode || formData.gmlcCode.trim().length < 3) newErrors.gmlcCode = 'Podaj kod GMLC';
+      if (!formData.minDays || formData.minDays < 1) newErrors.minDays = 'Podaj minimalny czas (min. 1 dzień)';
+      if (!formData.price || formData.price < 0) newErrors.price = 'Podaj cenę';
+      if (formData.stages.length === 0) newErrors.stages = 'Dodaj przynajmniej jeden etap';
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSave = () => {
+      if (!validateForm()) {
+        showNotification('Popraw błędy w formularzu', 'error');
+        return;
+      }
+      const data = {
+        ...formData,
+        minDays: parseInt(formData.minDays),
+        price: parseFloat(formData.price)
+      };
+      if (editItem) {
+        onSave(editItem.id, data);
+      } else {
+        onSave(data);
+      }
+      onClose();
+    };
+
+    const addStage = () => {
+      if (stageInput.trim()) {
+        setFormData({...formData, stages: [...formData.stages, stageInput.trim()]});
+        setStageInput('');
+      }
+    };
+
+    const removeStage = (index) => {
+      setFormData({...formData, stages: formData.stages.filter((_, i) => i !== index)});
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <h2 className="text-2xl font-bold mb-4">{editItem ? 'Edytuj uzupełnienie' : 'Dodaj uzupełnienie'}</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nazwa *</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className={`w-full border rounded px-3 py-2 ${errors.name ? 'border-red-500' : ''}`}
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Kod GMLC *</label>
+              <input 
+                type="text" 
+                maxLength="50"
+                className={`w-full border rounded px-3 py-2 ${errors.gmlcCode ? 'border-red-500' : ''}`}
+                value={formData.gmlcCode}
+                onChange={(e) => setFormData({...formData, gmlcCode: e.target.value})}
+                placeholder="GMLC-XXX"
+              />
+              {errors.gmlcCode && <p className="text-red-500 text-xs mt-1">{errors.gmlcCode}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Minimalny czas realizacji (dni) *</label>
+              <input 
+                type="number" 
+                min="1"
+                className={`w-full border rounded px-3 py-2 ${errors.minDays ? 'border-red-500' : ''}`}
+                value={formData.minDays}
+                onChange={(e) => setFormData({...formData, minDays: e.target.value})}
+              />
+              {errors.minDays && <p className="text-red-500 text-xs mt-1">{errors.minDays}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Cena jednostkowa (PLN) *</label>
+              <input 
+                type="number" 
+                min="0"
+                step="0.01"
+                className={`w-full border rounded px-3 py-2 ${errors.price ? 'border-red-500' : ''}`}
+                value={formData.price}
+                onChange={(e) => setFormData({...formData, price: e.target.value})}
+              />
+              {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Etapy produkcji *</label>
+              <div className="flex gap-2 mb-2">
+                <input 
+                  type="text" 
+                  maxLength="100"
+                  className="flex-1 border rounded px-3 py-2"
+                  value={stageInput}
+                  onChange={(e) => setStageInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addStage()}
+                  placeholder="Nazwa etapu"
+                />
+                <button 
+                  type="button"
+                  onClick={addStage}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  Dodaj
+                </button>
+              </div>
+              {errors.stages && <p className="text-red-500 text-xs mb-2">{errors.stages}</p>}
+              <div className="space-y-1">
+                {formData.stages.map((stage, idx) => (
+                  <div key={idx} className="flex justify-between items-center bg-gray-100 px-3 py-2 rounded">
+                    <span>{idx + 1}. {stage}</span>
+                    <button 
+                      type="button"
+                      onClick={() => removeStage(idx)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-6">
+            <button 
+              onClick={handleSave}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              {editItem ? 'Zapisz' : 'Dodaj'}
+            </button>
+            <button 
+              onClick={onClose}
+              className="flex-1 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Anuluj
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const EmployeeModal = ({ onClose, onSave }) => {
+    const [formData, setFormData] = useState(editItem || {
+      name: '',
+      position: '',
+      skills: []
+    });
+    const [skillInput, setSkillInput] = useState('');
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+      const newErrors = {};
+      if (!formData.name || formData.name.trim().length < 3) newErrors.name = 'Podaj imię i nazwisko (min. 3 znaki)';
+      if (!formData.position || formData.position.trim().length < 2) newErrors.position = 'Podaj stanowisko';
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSave = () => {
+      if (!validateForm()) {
+        showNotification('Popraw błędy w formularzu', 'error');
+        return;
+      }
+      if (editItem) {
+        onSave(editItem.id, formData);
+      } else {
+        onSave(formData);
+      }
+      onClose();
+    };
+
+    const addSkill = () => {
+      if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
+        setFormData({...formData, skills: [...formData.skills, skillInput.trim()]});
+        setSkillInput('');
+      }
+    };
+
+    const removeSkill = (skill) => {
+      setFormData({...formData, skills: formData.skills.filter(s => s !== skill)});
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <h2 className="text-2xl font-bold mb-4">{editItem ? 'Edytuj pracownika' : 'Dodaj pracownika'}</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Imię i nazwisko *</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className={`w-full border rounded px-3 py-2 ${errors.name ? 'border-red-500' : ''}`}
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Stanowisko *</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className={`w-full border rounded px-3 py-2 ${errors.position ? 'border-red-500' : ''}`}
+                value={formData.position}
+                onChange={(e) => setFormData({...formData, position: e.target.value})}
+                placeholder="np. Technik dentystyczny"
+              />
+              {errors.position && <p className="text-red-500 text-xs mt-1">{errors.position}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Kompetencje (etapy)</label>
+              <div className="flex gap-2 mb-2">
+                <input 
+                  type="text" 
+                  maxLength="100"
+                  className="flex-1 border rounded px-3 py-2"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                  placeholder="np. Odlew"
+                />
+                <button 
+                  type="button"
+                  onClick={addSkill}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  Dodaj
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.skills.map((skill, idx) => (
+                  <span key={idx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                    {skill}
+                    <button 
+                      type="button"
+                      onClick={() => removeSkill(skill)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-6">
+            <button 
+              onClick={handleSave}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              {editItem ? 'Zapisz' : 'Dodaj'}
+            </button>
+            <button 
+              onClick={onClose}
+              className="flex-1 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Anuluj
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const SupplierModal = ({ onClose, onSave }) => {
+    const [formData, setFormData] = useState(editItem || {
+      name: '',
+      service: '',
+      contact: '',
+      costPerService: ''
+    });
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+      const newErrors = {};
+      if (!formData.name || formData.name.trim().length < 3) newErrors.name = 'Podaj nazwę (min. 3 znaki)';
+      if (!formData.service || formData.service.trim().length < 2) newErrors.service = 'Podaj świadczoną usługę';
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSave = () => {
+      if (!validateForm()) {
+        showNotification('Popraw błędy w formularzu', 'error');
+        return;
+      }
+      const data = {
+        ...formData,
+        costPerService: formData.costPerService ? parseFloat(formData.costPerService) : 0
+      };
+      if (editItem) {
+        onSave(editItem.id, data);
+      } else {
+        onSave(data);
+      }
+      onClose();
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <h2 className="text-2xl font-bold mb-4">{editItem ? 'Edytuj dostawcę' : 'Dodaj dostawcę'}</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nazwa firmy *</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className={`w-full border rounded px-3 py-2 ${errors.name ? 'border-red-500' : ''}`}
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Świadczona usługa *</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className={`w-full border rounded px-3 py-2 ${errors.service ? 'border-red-500' : ''}`}
+                value={formData.service}
+                onChange={(e) => setFormData({...formData, service: e.target.value})}
+                placeholder="np. Odlewnictwo metali"
+              />
+              {errors.service && <p className="text-red-500 text-xs mt-1">{errors.service}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Kontakt</label>
+              <input 
+                type="text" 
+                maxLength="200"
+                className="w-full border rounded px-3 py-2"
+                value={formData.contact}
+                onChange={(e) => setFormData({...formData, contact: e.target.value})}
+                placeholder="Telefon / Email"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Koszt za usługę (PLN)</label>
+              <input 
+                type="number" 
+                min="0"
+                step="0.01"
+                className="w-full border rounded px-3 py-2"
+                value={formData.costPerService}
+                onChange={(e) => setFormData({...formData, costPerService: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-6">
+            <button 
+              onClick={handleSave}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              {editItem ? 'Zapisz' : 'Dodaj'}
+            </button>
+            <button 
+              onClick={onClose}
+              className="flex-1 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Anuluj
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ManagementView = ({ type, items, title, onAdd, onUpdate, onDelete }) => {
+    const filteredItems = items.filter(item => {
+      if (!searchTerm) return true;
+      const searchLower = searchTerm.toLowerCase();
+      return Object.values(item).some(val => 
+        String(val).toLowerCase().includes(searchLower)
+      );
+    });
+
+    return (
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">{title}</h1>
+          <button 
+            onClick={() => { setModalType(type); setEditItem(null); setShowModal(true); }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
+          >
+            <Plus size={20} /> Dodaj
+          </button>
+        </div>
+
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Szukaj..."
+            className="w-full border rounded-lg px-4 py-2"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="grid gap-4">
+          {filteredItems.map(item => (
+            <div key={item.id} className="bg-white rounded-lg border p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{item.name}</h3>
+                  {item.gmlcCode && <p className="text-sm text-gray-600">Kod GMLC: {item.gmlcCode}</p>}
+                  {item.price && <p className="text-sm text-gray-600">Cena jednostkowa: {item.price} PLN</p>}
+                  {item.minDays && <p className="text-sm text-gray-600">Min. czas: {item.minDays} dni</p>}
+                  {item.stages && <p className="text-sm text-gray-600">Etapy: {item.stages.join(', ')}</p>}
+                  {item.position && <p className="text-sm text-gray-600">Stanowisko: {item.position}</p>}
+                  {item.skills && item.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {item.skills.map((skill, idx) => (
+                        <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">{skill}</span>
+                      ))}
+                    </div>
+                  )}
+                  {item.specialty && <p className="text-sm text-gray-600">Specjalizacja: {item.specialty}</p>}
+                  {item.clinic && <p className="text-sm text-gray-600">Klinika: {item.clinic}</p>}
+                  {item.phone && <p className="text-sm text-gray-600">Tel: {item.phone}</p>}
+                  {item.email && <p className="text-sm text-gray-600">Email: {item.email}</p>}
+                  {item.service && <p className="text-sm text-gray-600">Usługa: {item.service}</p>}
+                  {item.contact && <p className="text-sm text-gray-600">Kontakt: {item.contact}</p>}
+                  {item.costPerService > 0 && <p className="text-sm text-gray-600">Koszt: {item.costPerService} PLN</p>}
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => { setEditItem(item); setModalType(type); setShowModal(true); }}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <Edit size={20} />
+                  </button>
+                  <button 
+                    onClick={() => setShowConfirmDelete({ type, id: item.id })}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const ConfirmDeleteModal = () => {
+    if (!showConfirmDelete) return null;
+
+    const handleDelete = () => {
+      const { type, id } = showConfirmDelete;
+      if (type === 'order') deleteOrder(id);
+      else if (type === 'doctor') deleteDoctor(id);
+      else if (type === 'prosthetic') deleteProsthetic(id);
+      else if (type === 'employee') deleteEmployee(id);
+      else if (type === 'supplier') deleteSupplier(id);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+          <h2 className="text-xl font-bold mb-4">Potwierdzenie usunięcia</h2>
+          <p className="mb-6">Czy na pewno chcesz usunąć ten element? Tej operacji nie można cofnąć.</p>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleDelete}
+              className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Usuń
+            </button>
+            <button 
+              onClick={() => setShowConfirmDelete(null)}
+              className="flex-1 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Anuluj
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (!initialized) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Ładowanie systemu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-500' :
+          notification.type === 'error' ? 'bg-red-500' :
+          'bg-blue-500'
+        } text-white`}>
+          {notification.message}
+        </div>
+      )}
+
+      <nav className="bg-blue-900 text-white p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">System Pracowni Protetycznej</h1>
+          <div className="flex gap-2">
+            <button
+              onClick={exportData}
+              className="bg-blue-700 hover:bg-blue-600 px-3 py-2 rounded flex items-center gap-2"
+            >
+              <Download size={18} /> Eksport
+            </button>
+            <label className="bg-blue-700 hover:bg-blue-600 px-3 py-2 rounded flex items-center gap-2 cursor-pointer">
+              <Upload size={18} /> Import
+              <input 
+                type="file" 
+                accept=".json" 
+                className="hidden" 
+                onChange={importData}
+              />
+            </label>
+          </div>
+        </div>
+        <div className="flex gap-4 flex-wrap">
+          <button onClick={() => { setActiveTab('dashboard'); setSearchTerm(''); }} className={`px-4 py-2 rounded ${activeTab === 'dashboard' ? 'bg-blue-700' : 'hover:bg-blue-800'}`}>
+            Dashboard
+          </button>
+          <button onClick={() => { setActiveTab('orders'); setSearchTerm(''); }} className={`px-4 py-2 rounded ${activeTab === 'orders' ? 'bg-blue-700' : 'hover:bg-blue-800'}`}>
+            Zlecenia
+          </button>
+          <button onClick={() => { setActiveTab('doctors'); setSearchTerm(''); }} className={`px-4 py-2 rounded ${activeTab === 'doctors' ? 'bg-blue-700' : 'hover:bg-blue-800'}`}>
+            Lekarze
+          </button>
+          <button onClick={() => { setActiveTab('prosthetics'); setSearchTerm(''); }} className={`px-4 py-2 rounded ${activeTab === 'prosthetics' ? 'bg-blue-700' : 'hover:bg-blue-800'}`}>
+            Uzupełnienia
+          </button>
+          <button onClick={() => { setActiveTab('employees'); setSearchTerm(''); }} className={`px-4 py-2 rounded ${activeTab === 'employees' ? 'bg-blue-700' : 'hover:bg-blue-800'}`}>
+            Pracownicy
+          </button>
+          <button onClick={() => { setActiveTab('suppliers'); setSearchTerm(''); }} className={`px-4 py-2 rounded ${activeTab === 'suppliers' ? 'bg-blue-700' : 'hover:bg-blue-800'}`}>
+            Dostawcy
+          </button>
+          <button onClick={() => { setActiveTab('invoices'); setSearchTerm(''); }} className={`px-4 py-2 rounded ${activeTab === 'invoices' ? 'bg-blue-700' : 'hover:bg-blue-800'}`}>
+            Faktury
+          </button>
+          <button onClick={() => { setActiveTab('declarations'); setSearchTerm(''); }} className={`px-4 py-2 rounded ${activeTab === 'declarations' ? 'bg-blue-700' : 'hover:bg-blue-800'}`}>
+            Oświadczenia
+          </button>
+        </div>
+      </nav>
+
+      <main>
+        {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'orders' && <OrdersView />}
+        {activeTab === 'doctors' && <ManagementView type="doctor" items={doctors} title="Lekarze" onAdd={addDoctor} onUpdate={updateDoctor} onDelete={deleteDoctor} />}
+        {activeTab === 'prosthetics' && <ManagementView type="prosthetic" items={prosthetics} title="Typy uzupełnień" onAdd={addProsthetic} onUpdate={updateProsthetic} onDelete={deleteProsthetic} />}
+        {activeTab === 'employees' && <ManagementView type="employee" items={employees} title="Pracownicy" onAdd={addEmployee} onUpdate={updateEmployee} onDelete={deleteEmployee} />}
+        {activeTab === 'suppliers' && <ManagementView type="supplier" items={suppliers} title="Dostawcy usług" onAdd={addSupplier} onUpdate={updateSupplier} onDelete={deleteSupplier} />}
+        {activeTab === 'invoices' && (
+          <div className="p-6">
+            <h1 className="text-3xl font-bold mb-6">Faktury</h1>
+            <div className="space-y-4">
+              {invoices.map(inv => (
+                <div key={inv.id} className="bg-white rounded-lg border p-4">
+                  <div className="flex justify-between">
+                    <div>
+                      <p className="font-semibold text-lg">{inv.invoiceNumber}</p>
+                      <p className="text-sm text-gray-600">Lekarz: {inv.doctor}</p>
+                      <p className="text-sm text-gray-600">{inv.prostheticName}</p>
+                      <p className="text-sm text-gray-600">Zęby: {inv.teethNumbers} (ilość: {inv.teethCount})</p>
+                      <p className="text-sm text-gray-600">Cena jednostkowa: {inv.unitPrice} PLN</p>
+                      <p className="text-xs text-gray-500">Wystawiono: {new Date(inv.issueDate).toLocaleDateString('pl-PL')}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-blue-900">{inv.amount.toFixed(2)} PLN</p>
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{inv.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {invoices.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  Brak wystawionych faktur. Faktury generują się automatycznie po zakończeniu zleceń.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        {activeTab === 'declarations' && (
+          <div className="p-6">
+            <h1 className="text-3xl font-bold mb-6">Oświadczenia</h1>
+            <div className="space-y-4">
+              {declarations.map(dec => (
+                <div key={dec.id} className="bg-white rounded-lg border p-6">
+                  <div className="flex justify-between mb-4">
+                    <div>
+                      <p className="font-semibold text-lg">{dec.declarationNumber}</p>
+                      <p className="text-sm text-gray-600">Pacjent: {dec.patientCode}</p>
+                      <p className="text-sm text-gray-600">Lekarz: {dec.doctorName}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500">Wystawiono: {new Date(dec.issueDate).toLocaleDateString('pl-PL')}</p>
+                    </div>
+                  </div>
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold mb-2">Szczegóły uzupełnienia</h3>
+                    <p className="text-sm"><strong>Typ:</strong> {dec.prostheticName}</p>
+                    <p className="text-sm"><strong>Kod GMLC:</strong> {dec.gmlcCode}</p>
+                    <p className="text-sm"><strong>Zęby:</strong> {dec.teethNumbers}</p>
+                    <p className="text-sm"><strong>Materiał:</strong> {dec.material}</p>
+                    <p className="text-sm"><strong>Data ukończenia:</strong> {new Date(dec.completionDate).toLocaleDateString('pl-PL')}</p>
+                  </div>
+                  <div className="mt-4 p-3 bg-gray-50 rounded text-xs text-gray-600">
+                    <p className="font-semibold mb-1">Oświadczenie</p>
+                    <p>Niniejsze uzupełnienie protetyczne zostało wykonane zgodnie ze zleceniem lekarza dentysty. 
+                    Produkt spełnia wymogi określone w przepisach dotyczących wyrobów medycznych.</p>
+                  </div>
+                </div>
+              ))}
+              {declarations.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  Brak wygenerowanych oświadczeń. Oświadczenia generują się po zakończeniu zleceń.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {showModal && modalType === 'order' && (
+        <OrderModal 
+          onClose={() => { setShowModal(false); setEditItem(null); }}
+          onSave={editItem ? updateOrder : addOrder}
+        />
+      )}
+      {showModal && modalType === 'doctor' && (
+        <DoctorModal 
+          onClose={() => { setShowModal(false); setEditItem(null); }}
+          onSave={editItem ? updateDoctor : addDoctor}
+        />
+      )}
+      {showModal && modalType === 'prosthetic' && (
+        <ProstheticModal 
+          onClose={() => { setShowModal(false); setEditItem(null); }}
+          onSave={editItem ? updateProsthetic : addProsthetic}
+        />
+      )}
+      {showModal && modalType === 'employee' && (
+        <EmployeeModal 
+          onClose={() => { setShowModal(false); setEditItem(null); }}
+          onSave={editItem ? updateEmployee : addEmployee}
+        />
+      )}
+      {showModal && modalType === 'supplier' && (
+        <SupplierModal 
+          onClose={() => { setShowModal(false); setEditItem(null); }}
+          onSave={editItem ? updateSupplier : addSupplier}
+        />
+      )}
+      
+      <ConfirmDeleteModal />
+    </div>
+  );
+};
+
+export default DentalLabSystem;
     </script>
 </body>
 </html>
