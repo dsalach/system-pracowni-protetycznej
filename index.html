@@ -3,144 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Pracowni Protetycznej</title>
+    <title>System Pracowni Protetycznej v2.1</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f3f4f6; }
-        
-        /* Nawigacja */
-        .nav { background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f3f4f6; color: #1f2937; }
+        .nav { background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
-        .nav h1 { font-size: 1.5rem; font-weight: 700; }
         .nav-buttons { display: flex; gap: 0.5rem; }
         .nav-btn { padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); border: none; color: white; cursor: pointer; border-radius: 0.5rem; font-size: 0.875rem; transition: all 0.2s; }
         .nav-btn:hover { background: rgba(255,255,255,0.3); }
-        .nav-tabs { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-        .nav-tab { padding: 0.75rem 1.5rem; background: transparent; border: none; color: white; cursor: pointer; border-radius: 0.5rem; font-size: 1rem; transition: all 0.2s; }
-        .nav-tab:hover { background: rgba(255,255,255,0.15); }
-        .nav-tab.active { background: rgba(255,255,255,0.25); font-weight: 600; }
-        
-        /* Layout */
-        .main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
-        .card { background: white; border-radius: 0.75rem; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
-        .card h2 { font-size: 2rem; margin-bottom: 1.5rem; color: #1f2937; }
-        
-        /* Statystyki */
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { padding: 2rem; border-radius: 0.75rem; border: 2px solid; transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-2px); }
-        .stat-card.blue { background: #eff6ff; border-color: #bfdbfe; }
-        .stat-card.green { background: #f0fdf4; border-color: #bbf7d0; }
-        .stat-card.purple { background: #faf5ff; border-color: #e9d5ff; }
-        .stat-card.red { background: #fef2f2; border-color: #fecaca; }
-        .stat-label { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem; font-weight: 500; }
-        .stat-value { font-size: 2.5rem; font-weight: 700; }
-        .blue .stat-value { color: #1e3a8a; }
-        .green .stat-value { color: #166534; }
-        .purple .stat-value { color: #6b21a8; }
-        .red .stat-value { color: #991b1b; }
-        
-        /* Buttony */
-        .btn { padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 1rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
-        .btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+        .nav-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .nav-tab { padding: 0.6rem 1rem; background: transparent; border: none; color: white; cursor: pointer; border-radius: 0.5rem; font-size: 0.9rem; transition: all 0.2s; }
+        .nav-tab.active { background: rgba(255,255,255,0.25); font-weight: 600; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .main { padding: 2rem; max-width: 1400px; margin: 0 auto; min-height: 80vh; }
+        .card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e5e7eb; }
+        .stat-value { font-size: 2rem; font-weight: 700; margin-top: 0.5rem; }
+        .btn { padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn-red { background: #dc2626; }
-        .btn-red:hover { background: #b91c1c; }
         .btn-green { background: #16a34a; }
-        .btn-green:hover { background: #15803d; }
-        .btn-gray { background: #6b7280; }
-        .btn-gray:hover { background: #4b5563; }
-        
-        /* Formularze */
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151; font-size: 0.875rem; }
-        .input, .select, .textarea { width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; transition: border-color 0.2s; }
-        .input:focus, .select:focus, .textarea:focus { outline: none; border-color: #2563eb; }
-        .input.error, .select.error { border-color: #dc2626; }
-        .error-text { color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem; }
-        .textarea { resize: vertical; min-height: 80px; font-family: inherit; }
-        
-        /* Listy */
-        .list-item { background: #f9fafb; padding: 1.25rem; border-radius: 0.75rem; margin-bottom: 1rem; border: 1px solid #e5e7eb; transition: all 0.2s; }
-        .list-item:hover { box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-color: #d1d5db; }
-        .list-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
-        .list-title { font-weight: 600; color: #1f2937; font-size: 1.125rem; }
-        .list-desc { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
-        .list-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        
-        /* Badges */
-        .badge { display: inline-block; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.4rem; }
+        .input, .select, .textarea { width: 100%; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 0.4rem; font-size: 1rem; }
+        .list-item { border: 1px solid #e5e7eb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+        .badge { padding: 0.25rem 0.6rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; }
         .badge-blue { background: #dbeafe; color: #1e40af; }
         .badge-green { background: #d1fae5; color: #065f46; }
-        .badge-yellow { background: #fef3c7; color: #92400e; }
-        .badge-red { background: #fee2e2; color: #991b1b; }
-        .badge-purple { background: #e9d5ff; color: #6b21a8; }
-        .badge-orange { background: #fed7aa; color: #9a3412; }
-        
-        /* Alerty */
-        .alert { padding: 1rem 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem; border-left: 4px solid; }
-        .alert-success { background: #d1fae5; border-color: #10b981; color: #065f46; }
-        .alert-error { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
-        .alert-warning { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
-        .alert-info { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
-        
-        /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
-        .modal { background: white; border-radius: 1rem; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        .modal-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; }
-        .modal-title { font-size: 1.5rem; font-weight: 700; color: #1f2937; }
-        .modal-body { padding: 1.5rem; }
-        .modal-footer { padding: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.75rem; justify-content: flex-end; }
-        
-        /* Toast notification */
-        .toast { position: fixed; top: 1.5rem; right: 1.5rem; background: white; padding: 1rem 1.5rem; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 1001; border-left: 4px solid; min-width: 300px; animation: slideIn 0.3s ease-out; }
-        .toast.success { border-color: #10b981; }
-        .toast.error { border-color: #ef4444; }
-        .toast.info { border-color: #3b82f6; }
-        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        
-        /* Etapy */
-        .stages { display: flex; flex-direction: column; gap: 0.75rem; }
-        .stage { background: white; padding: 1rem; border-radius: 0.5rem; border: 2px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .stage-name { font-weight: 600; color: #1f2937; flex: 1; min-width: 150px; }
-        .stage-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-        
-        /* Search bar */
-        .search-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
-        .search-input { flex: 1; min-width: 250px; }
-        
-        /* Loading */
-        .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; }
-        .spinner { border: 4px solid #e5e7eb; border-top: 4px solid #2563eb; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .main { padding: 1rem; }
-            .card { padding: 1.25rem; }
-            .nav { padding: 1rem; }
-            .nav h1 { font-size: 1.25rem; }
-            .nav-tabs { gap: 0.5rem; }
-            .nav-tab { padding: 0.5rem 1rem; font-size: 0.875rem; }
-            .modal { max-width: 100%; margin: 1rem; }
-            .stats { grid-template-columns: 1fr; }
-            .form-grid { grid-template-columns: 1fr; }
-        }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: white; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .toast { position: fixed; top: 1rem; right: 1rem; padding: 1rem; border-radius: 0.5rem; color: white; z-index: 1100; animation: slideIn 0.3s; }
+        .toast.success { background: #10b981; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .overdue { border-left: 5px solid #dc2626 !important; }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script>
         const { useState, useEffect, createElement: e } = React;
-        
-        // Główny komponent aplikacji
+
         function DentalLabSystem() {
-            const CURRENT_VERSION = '2.0.0';
-            
-            // Stany
             const [activeTab, setActiveTab] = useState('dashboard');
             const [orders, setOrders] = useState([]);
             const [doctors, setDoctors] = useState([]);
@@ -155,1032 +61,216 @@
             const [searchTerm, setSearchTerm] = useState('');
             const [notification, setNotification] = useState(null);
             const [showConfirmDelete, setShowConfirmDelete] = useState(null);
-            const [sortBy, setSortBy] = useState('date');
-            const [initialized, setInitialized] = useState(false);
 
-            // Załaduj dane przy starcie
             useEffect(() => {
-                loadAllData();
+                const load = (key) => JSON.parse(localStorage.getItem(key) || '[]');
+                setOrders(load('orders'));
+                setDoctors(load('doctors'));
+                setEmployees(load('employees'));
+                setSuppliers(load('suppliers'));
+                setInvoices(load('invoices'));
+                setDeclarations(load('declarations'));
+                
+                const savedP = load('prosthetics');
+                if (savedP.length > 0) setProsthetics(savedP);
+                else {
+                    const def = [{ id: 1, name: 'Korona porcelanowa', gmlcCode: 'GMLC-01', minDays: 5, price: 500, stages: ['Odlew', 'Porcelana'] }];
+                    setProsthetics(def);
+                    localStorage.setItem('prosthetics', JSON.stringify(def));
+                }
             }, []);
 
-            // Auto-hide notification
-            useEffect(() => {
-                if (notification) {
-                    const timer = setTimeout(() => setNotification(null), 5000);
-                    return () => clearTimeout(timer);
+            const notify = (msg) => {
+                setNotification(msg);
+                setTimeout(() => setNotification(null), 3000);
+            };
+
+            const save = (key, data, setter) => {
+                localStorage.setItem(key, JSON.stringify(data));
+                setter(data);
+            };
+
+            const handleDelete = () => {
+                const { type, id } = showConfirmDelete;
+                if (type === 'order') {
+                    const updated = orders.filter(o => o.id !== id);
+                    save('orders', updated, setOrders);
+                } else if (type === 'doctor') {
+                    if (orders.some(o => Number(o.doctorId) === id)) return notify('Błąd: Lekarz ma przypisane zlecenia!');
+                    save('doctors', doctors.filter(d => d.id !== id), setDoctors);
+                } else if (type === 'prosthetic') {
+                    if (orders.some(o => Number(o.prostheticId) === id)) return notify('Błąd: Uzupełnienie jest w użyciu!');
+                    save('prosthetics', prosthetics.filter(p => p.id !== id), setProsthetics);
+                } else if (type === 'employee') {
+                    save('employees', employees.filter(emp => emp.id !== id), setEmployees);
+                } else if (type === 'supplier') {
+                    save('suppliers', suppliers.filter(s => s.id !== id), setSuppliers);
                 }
-            }, [notification]);
-
-            const showNotification = (message, type = 'success') => {
-                setNotification({ message, type });
-            };
-
-            const loadAllData = () => {
-                try {
-                    const savedOrders = localStorage.getItem('orders');
-                    const savedDoctors = localStorage.getItem('doctors');
-                    const savedProsthetics = localStorage.getItem('prosthetics');
-                    const savedEmployees = localStorage.getItem('employees');
-                    const savedSuppliers = localStorage.getItem('suppliers');
-                    const savedInvoices = localStorage.getItem('invoices');
-                    const savedDeclarations = localStorage.getItem('declarations');
-
-                    setOrders(savedOrders ? JSON.parse(savedOrders) : []);
-                    setDoctors(savedDoctors ? JSON.parse(savedDoctors) : []);
-                    setEmployees(savedEmployees ? JSON.parse(savedEmployees) : []);
-                    setSuppliers(savedSuppliers ? JSON.parse(savedSuppliers) : []);
-                    setInvoices(savedInvoices ? JSON.parse(savedInvoices) : []);
-                    setDeclarations(savedDeclarations ? JSON.parse(savedDeclarations) : []);
-
-                    if (savedProsthetics) {
-                        setProsthetics(JSON.parse(savedProsthetics));
-                    } else {
-                        initializeDefaultProsthetics();
-                    }
-
-                    setInitialized(true);
-                } catch (error) {
-                    console.error('Błąd ładowania danych:', error);
-                    showNotification('Błąd ładowania danych', 'error');
-                    setInitialized(true);
-                }
-            };
-
-            const initializeDefaultProsthetics = () => {
-                const defaults = [
-                    { id: Date.now(), name: 'Korona porcelanowa', gmlcCode: 'GMLC-001', minDays: 7, price: 450, stages: ['Odlew', 'Szlifowanie', 'Porcelana', 'Glazura'] },
-                    { id: Date.now() + 1, name: 'Most 3-punktowy', gmlcCode: 'GMLC-002', minDays: 10, price: 1200, stages: ['Odlew', 'Szlifowanie', 'Porcelana', 'Polerowanie'] },
-                    { id: Date.now() + 2, name: 'Proteza akrylowa', gmlcCode: 'GMLC-003', minDays: 14, price: 800, stages: ['Wycisk', 'Model', 'Ustawienie', 'Polimeryzacja'] }
-                ];
-                setProsthetics(defaults);
-                localStorage.setItem('prosthetics', JSON.stringify(defaults));
-                showNotification('Zainicjalizowano przykładowe uzupełnienia', 'info');
-            };
-
-            const saveToStorage = (key, data) => {
-                try {
-                    localStorage.setItem(key, JSON.stringify(data));
-                    return true;
-                } catch (error) {
-                    console.error('Błąd zapisu:', error);
-                    showNotification('Błąd zapisu danych: ' + error.message, 'error');
-                    return false;
-                }
-            };
-
-            // CRUD dla zleceń
-            const addOrder = (data) => {
-                try {
-                    const prosthetic = prosthetics.find(p => p.id === parseInt(data.prostheticId));
-                    if (!prosthetic) {
-                        showNotification('Nie znaleziono uzupełnienia', 'error');
-                        return;
-                    }
-
-                    const teethCount = data.teethNumbers.split(',').filter(t => t.trim()).length || 1;
-                    const totalPrice = prosthetic.price * teethCount;
-
-                    const newOrder = {
-                        id: Date.now(),
-                        ...data,
-                        prostheticId: parseInt(data.prostheticId),
-                        doctorId: parseInt(data.doctorId),
-                        status: 'Nowe',
-                        totalPrice,
-                        teethCount,
-                        createdAt: new Date().toISOString(),
-                        stages: prosthetic.stages || [],
-                        stageProgress: (prosthetic.stages || []).map(() => ({ 
-                            assignedTo: '', 
-                            status: 'Nierozpoczęty', 
-                            startedAt: null, 
-                            completedAt: null 
-                        }))
-                    };
-
-                    const updated = [...orders, newOrder];
-                    setOrders(updated);
-                    saveToStorage('orders', updated);
-                    showNotification('Zlecenie zostało dodane');
-                } catch (error) {
-                    showNotification('Błąd dodawania zlecenia: ' + error.message, 'error');
-                }
-            };
-
-            const updateOrder = (id, data) => {
-                try {
-                    const prosthetic = prosthetics.find(p => p.id === parseInt(data.prostheticId));
-                    const teethCount = data.teethNumbers.split(',').filter(t => t.trim()).length || 1;
-                    const totalPrice = prosthetic.price * teethCount;
-
-                    const updated = orders.map(order => 
-                        order.id === id ? { 
-                            ...order, 
-                            ...data,
-                            prostheticId: parseInt(data.prostheticId),
-                            doctorId: parseInt(data.doctorId),
-                            totalPrice, 
-                            teethCount,
-                            modifiedAt: new Date().toISOString() 
-                        } : order
-                    );
-                    setOrders(updated);
-                    saveToStorage('orders', updated);
-                    showNotification('Zlecenie zaktualizowane');
-                } catch (error) {
-                    showNotification('Błąd aktualizacji: ' + error.message, 'error');
-                }
-            };
-
-            const deleteOrder = (id) => {
-                const updated = orders.filter(o => o.id !== id);
-                setOrders(updated);
-                saveToStorage('orders', updated);
-                showNotification('Zlecenie usunięte');
                 setShowConfirmDelete(null);
+                notify('Usunięto pomyślnie');
             };
 
-            const updateOrderStatus = (id, status) => {
-                const updated = orders.map(order => 
-                    order.id === id ? { 
-                        ...order, 
-                        status,
-                        ...(status === 'Zakończone' ? { completedAt: new Date().toISOString() } : {})
-                    } : order
-                );
-                setOrders(updated);
-                saveToStorage('orders', updated);
-                showNotification('Status zmieniony na: ' + status);
-            };
-
-            const updateOrderStage = (orderId, stageIndex, assignedTo, status) => {
-                const updated = orders.map(order => {
-                    if (order.id === orderId) {
-                        const newStages = [...(order.stageProgress || [])];
-                        const current = newStages[stageIndex] || {};
-                        newStages[stageIndex] = {
-                            assignedTo,
-                            status,
-                            startedAt: !current.startedAt && status === 'W trakcie' ? new Date().toISOString() : current.startedAt,
-                            completedAt: status === 'Zakończony' ? new Date().toISOString() : null
-                        };
-                        return { ...order, stageProgress: newStages };
-                    }
-                    return order;
-                });
-                setOrders(updated);
-                saveToStorage('orders', updated);
-            };
-
-            const generateInvoice = (orderId) => {
-                try {
-                    const order = orders.find(o => o.id === orderId);
-                    const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
-                    const doctor = doctors.find(d => d.id === order.doctorId);
-                    
-                    const year = new Date().getFullYear();
-                    const yearInvoices = invoices.filter(inv => inv.invoiceNumber.startsWith(`FV/${year}/`));
-                    const nextNumber = yearInvoices.length + 1;
-                    
-                    const invoice = {
-                        id: Date.now(),
-                        orderId,
-                        invoiceNumber: `FV/${year}/${String(nextNumber).padStart(4, '0')}`,
-                        doctor: doctor?.name,
-                        prostheticName: prosthetic?.name,
-                        teethNumbers: order.teethNumbers,
-                        teethCount: order.teethCount,
-                        unitPrice: prosthetic?.price,
-                        amount: order.totalPrice,
-                        issueDate: new Date().toISOString(),
-                        status: 'Wystawiona'
-                    };
-                    
-                    const updated = [...invoices, invoice];
-                    setInvoices(updated);
-                    saveToStorage('invoices', updated);
-                    showNotification('Faktura wystawiona: ' + invoice.invoiceNumber);
-                } catch (error) {
-                    showNotification('Błąd generowania faktury: ' + error.message, 'error');
-                }
-            };
-
-            const generateDeclaration = (orderId) => {
-                try {
-                    const order = orders.find(o => o.id === orderId);
-                    const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
-                    const doctor = doctors.find(d => d.id === order.doctorId);
-                    
-                    const declaration = {
-                        id: Date.now(),
-                        orderId,
-                        declarationNumber: `OSW/${new Date().getFullYear()}/${declarations.length + 1}`,
-                        patientCode: order.patientCode,
-                        doctorName: doctor?.name,
-                        prostheticName: prosthetic?.name,
-                        gmlcCode: prosthetic?.gmlcCode,
-                        teethNumbers: order.teethNumbers,
-                        material: order.material,
-                        issueDate: new Date().toISOString(),
-                        completionDate: order.completedAt
-                    };
-                    
-                    const updated = [...declarations, declaration];
-                    setDeclarations(updated);
-                    saveToStorage('declarations', updated);
-                    showNotification('Oświadczenie wygenerowane: ' + declaration.declarationNumber);
-                } catch (error) {
-                    showNotification('Błąd generowania oświadczenia: ' + error.message, 'error');
-                }
-            };
-
-            // CRUD dla lekarzy
-            const addDoctor = (data) => {
-                const newDoctor = { id: Date.now(), ...data };
-                const updated = [...doctors, newDoctor];
-                setDoctors(updated);
-                saveToStorage('doctors', updated);
-                showNotification('Lekarz dodany');
-            };
-
-            const updateDoctor = (id, data) => {
-                const updated = doctors.map(d => d.id === id ? { ...d, ...data } : d);
-                setDoctors(updated);
-                saveToStorage('doctors', updated);
-                showNotification('Dane lekarza zaktualizowane');
-            };
-
-            const deleteDoctor = (id) => {
-                if (orders.some(o => o.doctorId === id)) {
-                    showNotification('Nie można usunąć lekarza z przypisanymi zleceniami', 'error');
-                    setShowConfirmDelete(null);
-                    return;
-                }
-                const updated = doctors.filter(d => d.id !== id);
-                setDoctors(updated);
-                saveToStorage('doctors', updated);
-                showNotification('Lekarz usunięty');
-                setShowConfirmDelete(null);
-            };
-
-            // CRUD dla uzupełnień
-            const addProsthetic = (data) => {
-                const newProsthetic = { 
-                    id: Date.now(), 
-                    ...data,
-                    minDays: parseInt(data.minDays),
-                    price: parseFloat(data.price)
-                };
-                const updated = [...prosthetics, newProsthetic];
-                setProsthetics(updated);
-                saveToStorage('prosthetics', updated);
-                showNotification('Uzupełnienie dodane');
-            };
-
-            const updateProsthetic = (id, data) => {
-                const updated = prosthetics.map(p => p.id === id ? { 
-                    ...p, 
-                    ...data,
-                    minDays: parseInt(data.minDays),
-                    price: parseFloat(data.price)
-                } : p);
-                setProsthetics(updated);
-                saveToStorage('prosthetics', updated);
-                showNotification('Uzupełnienie zaktualizowane');
-            };
-
-            const deleteProsthetic = (id) => {
-                if (orders.some(o => o.prostheticId === id)) {
-                    showNotification('Nie można usunąć uzupełnienia z przypisanymi zleceniami', 'error');
-                    setShowConfirmDelete(null);
-                    return;
-                }
-                const updated = prosthetics.filter(p => p.id !== id);
-                setProsthetics(updated);
-                saveToStorage('prosthetics', updated);
-                showNotification('Uzupełnienie usunięte');
-                setShowConfirmDelete(null);
-            };
-
-            // CRUD dla pracowników
-            const addEmployee = (data) => {
-                const newEmployee = { id: Date.now(), ...data };
-                const updated = [...employees, newEmployee];
-                setEmployees(updated);
-                saveToStorage('employees', updated);
-                showNotification('Pracownik dodany');
-            };
-
-            const updateEmployee = (id, data) => {
-                const updated = employees.map(emp => emp.id === id ? { ...emp, ...data } : emp);
-                setEmployees(updated);
-                saveToStorage('employees', updated);
-                showNotification('Pracownik zaktualizowany');
-            };
-
-            const deleteEmployee = (id) => {
-                const updated = employees.filter(emp => emp.id !== id);
-                setEmployees(updated);
-                saveToStorage('employees', updated);
-                showNotification('Pracownik usunięty');
-                setShowConfirmDelete(null);
-            };
-
-            // CRUD dla dostawców
-            const addSupplier = (data) => {
-                const newSupplier = { id: Date.now(), ...data };
-                const updated = [...suppliers, newSupplier];
-                setSuppliers(updated);
-                saveToStorage('suppliers', updated);
-                showNotification('Dostawca dodany');
-            };
-
-            const updateSupplier = (id, data) => {
-                const updated = suppliers.map(s => s.id === id ? { ...s, ...data } : s);
-                setSuppliers(updated);
-                saveToStorage('suppliers', updated);
-                showNotification('Dostawca zaktualizowany');
-            };
-
-            const deleteSupplier = (id) => {
-                const updated = suppliers.filter(s => s.id !== id);
-                setSuppliers(updated);
-                saveToStorage('suppliers', updated);
-                showNotification('Dostawca usunięty');
-                setShowConfirmDelete(null);
-            };
-            // Export/Import
-            const exportData = () => {
-                const exportObj = {
-                    version: CURRENT_VERSION,
-                    exportDate: new Date().toISOString(),
-                    orders, doctors, prosthetics, employees, suppliers, invoices, declarations
-                };
-                const dataStr = JSON.stringify(exportObj, null, 2);
-                const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `pracownia-backup-${new Date().toISOString().split('T')[0]}.json`;
-                link.click();
-                showNotification('Dane wyeksportowane');
-            };
-
-            const importData = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const imported = JSON.parse(e.target.result);
-                        if (imported.orders) { setOrders(imported.orders); saveToStorage('orders', imported.orders); }
-                        if (imported.doctors) { setDoctors(imported.doctors); saveToStorage('doctors', imported.doctors); }
-                        if (imported.prosthetics) { setProsthetics(imported.prosthetics); saveToStorage('prosthetics', imported.prosthetics); }
-                        if (imported.employees) { setEmployees(imported.employees); saveToStorage('employees', imported.employees); }
-                        if (imported.suppliers) { setSuppliers(imported.suppliers); saveToStorage('suppliers', imported.suppliers); }
-                        if (imported.invoices) { setInvoices(imported.invoices); saveToStorage('invoices', imported.invoices); }
-                        if (imported.declarations) { setDeclarations(imported.declarations); saveToStorage('declarations', imported.declarations); }
-                        showNotification('Dane zaimportowane pomyślnie');
-                    } catch (error) {
-                        showNotification('Błąd importu: ' + error.message, 'error');
-                    }
-                };
-                reader.readAsText(file);
-            };
-
-            // Pilne zlecenia
-            const getUrgentOrders = () => {
-                const today = new Date();
-                const threeDays = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
-                return orders.filter(o => {
-                    if (o.status === 'Zakończone') return false;
-                    const deadline = new Date(o.deadline);
-                    return deadline <= threeDays;
-                });
-            };
-
-            // Render funkcje
             const renderDashboard = () => {
-                const activeOrders = orders.filter(o => o.status !== 'Zakończone').length;
-                const urgentOrders = getUrgentOrders();
-                const completedThisMonth = orders.filter(o => {
-                    if (!o.completedAt) return false;
-                    const completed = new Date(o.completedAt);
-                    const now = new Date();
-                    return completed.getMonth() === now.getMonth() && completed.getFullYear() === now.getFullYear();
-                }).length;
-                const revenue = invoices.filter(inv => {
-                    const invDate = new Date(inv.issueDate);
-                    const now = new Date();
-                    return invDate.getMonth() === now.getMonth() && invDate.getFullYear() === now.getFullYear();
-                }).reduce((sum, inv) => sum + (inv.amount || 0), 0);
-
-                return e('div', { className: 'card' },
-                    e('h2', null, '📊 Panel główny'),
-                    urgentOrders.length > 0 && e('div', { className: 'alert alert-warning' },
-                        e('strong', null, `⚠️ Pilne zlecenia: ${urgentOrders.length}`),
-                        e('div', { style: { fontSize: '0.875rem', marginTop: '0.25rem' } }, 
-                            'Zlecenia z terminem w ciągu najbliższych 3 dni')
-                    ),
+                const revenue = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+                return e('div', null,
                     e('div', { className: 'stats' },
-                        e('div', { className: 'stat-card blue' },
-                            e('div', { className: 'stat-label' }, 'Aktywne zlecenia'),
-                            e('div', { className: 'stat-value' }, activeOrders)
-                        ),
-                        e('div', { className: 'stat-card red' },
-                            e('div', { className: 'stat-label' }, 'Pilne zlecenia'),
-                            e('div', { className: 'stat-value' }, urgentOrders.length)
-                        ),
-                        e('div', { className: 'stat-card green' },
-                            e('div', { className: 'stat-label' }, 'Ukończone (m-c)'),
-                            e('div', { className: 'stat-value' }, completedThisMonth)
-                        ),
-                        e('div', { className: 'stat-card purple' },
-                            e('div', { className: 'stat-label' }, 'Przychód (m-c)'),
-                            e('div', { className: 'stat-value' }, revenue.toFixed(0) + ' zł')
-                        )
+                        e('div', { className: 'stat-card' }, e('div', null, 'Aktywne zlecenia'), e('div', { className: 'stat-value' }, orders.filter(o => o.status !== 'Zakończone').length)),
+                        e('div', { className: 'stat-card' }, e('div', null, 'Wystawione faktury'), e('div', { className: 'stat-value' }, invoices.length)),
+                        e('div', { className: 'stat-card' }, e('div', null, 'Suma przychodów'), e('div', { className: 'stat-value', style: {color: '#166534'} }, revenue.toFixed(2) + ' zł'))
                     ),
-                    e('div', { className: 'alert alert-success' },
-                        e('strong', null, '✅ System działa poprawnie!'),
-                        e('div', { style: { fontSize: '0.875rem', marginTop: '0.5rem' } },
-                            `Wersja ${CURRENT_VERSION} • ${doctors.length} lekarzy • ${prosthetics.length} typów uzupełnień • ${employees.length} pracowników`)
-                    )
+                    e('div', { className: 'card' }, e('h2', null, 'Witaj w systemie'), e('p', null, 'Wybierz zakładkę z menu powyżej, aby zarządzać pracownią.'))
                 );
             };
 
-            const renderOrderForm = () => {
-                const [formData, setFormData] = useState(editItem || {
-                    doctorId: '', patientCode: '', prostheticId: '', deadline: '',
-                    teethNumbers: '', material: '', notes: ''
-                });
-                const [errors, setErrors] = useState({});
-
-                const validate = () => {
-                    const newErrors = {};
-                    if (!formData.doctorId) newErrors.doctorId = 'Wybierz lekarza';
-                    if (!formData.patientCode || formData.patientCode.trim().length < 3) 
-                        newErrors.patientCode = 'Min. 3 znaki';
-                    if (!formData.prostheticId) newErrors.prostheticId = 'Wybierz typ';
-                    if (!formData.deadline) newErrors.deadline = 'Ustaw termin';
-                    if (!formData.teethNumbers) newErrors.teethNumbers = 'Podaj numery zębów';
-                    if (!formData.material || formData.material.trim().length < 2) 
-                        newErrors.material = 'Podaj materiał';
-
-                    const prosthetic = prosthetics.find(p => p.id === parseInt(formData.prostheticId));
-                    if (prosthetic && formData.deadline) {
-                        const minDate = new Date();
-                        minDate.setDate(minDate.getDate() + prosthetic.minDays);
-                        if (new Date(formData.deadline) < minDate) {
-                            newErrors.deadline = `Min. ${prosthetic.minDays} dni (${minDate.toLocaleDateString('pl-PL')})`;
-                        }
-                    }
-
-                    const teethArray = formData.teethNumbers.split(',').map(t => parseInt(t.trim())).filter(n => !isNaN(n));
-                    if (teethArray.some(n => n < 1 || n > 32)) {
-                        newErrors.teethNumbers = 'Numery 1-32';
-                    }
-
-                    setErrors(newErrors);
-                    return Object.keys(newErrors).length === 0;
-                };
-
-                const handleSave = () => {
-                    if (!validate()) {
-                        showNotification('Popraw błędy w formularzu', 'error');
-                        return;
-                    }
-                    if (editItem) {
-                        updateOrder(editItem.id, formData);
-                    } else {
-                        addOrder(formData);
-                    }
-                    setShowModal(false);
-                    setEditItem(null);
-                };
-
-                const handleProstheticChange = (prostheticId) => {
-                    const prosthetic = prosthetics.find(p => p.id === parseInt(prostheticId));
-                    if (prosthetic) {
-                        const minDate = new Date();
-                        minDate.setDate(minDate.getDate() + prosthetic.minDays);
-                        setFormData({...formData, prostheticId: parseInt(prostheticId), deadline: minDate.toISOString().split('T')[0]});
-                    } else {
-                        setFormData({...formData, prostheticId: parseInt(prostheticId)});
-                    }
-                };
-
-                return e('div', { className: 'modal-overlay', onClick: (ev) => ev.target.className === 'modal-overlay' && setShowModal(false) },
-                    e('div', { className: 'modal' },
-                        e('div', { className: 'modal-header' },
-                            e('div', { className: 'modal-title' }, editItem ? 'Edytuj zlecenie' : 'Nowe zlecenie')
-                        ),
-                        e('div', { className: 'modal-body' },
-                            e('div', { className: 'form-grid' },
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Lekarz *'),
-                                    e('select', { 
-                                        className: errors.doctorId ? 'select error' : 'select',
-                                        value: formData.doctorId,
-                                        onChange: (ev) => setFormData({...formData, doctorId: ev.target.value})
-                                    },
-                                        e('option', { value: '' }, 'Wybierz...'),
-                                        doctors.map(d => e('option', { key: d.id, value: d.id }, d.name))
-                                    ),
-                                    errors.doctorId && e('div', { className: 'error-text' }, errors.doctorId)
-                                ),
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Kod pacjenta *'),
-                                    e('input', { 
-                                        className: errors.patientCode ? 'input error' : 'input',
-                                        value: formData.patientCode,
-                                        onChange: (ev) => setFormData({...formData, patientCode: ev.target.value}),
-                                        placeholder: 'Jan Kowalski',
-                                        maxLength: 100
-                                    }),
-                                    errors.patientCode && e('div', { className: 'error-text' }, errors.patientCode)
-                                )
-                            ),
-                            e('div', { className: 'form-grid' },
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Typ uzupełnienia *'),
-                                    e('select', { 
-                                        className: errors.prostheticId ? 'select error' : 'select',
-                                        value: formData.prostheticId,
-                                        onChange: (ev) => handleProstheticChange(ev.target.value)
-                                    },
-                                        e('option', { value: '' }, 'Wybierz...'),
-                                        prosthetics.map(p => e('option', { key: p.id, value: p.id }, 
-                                            `${p.name} - ${p.price} zł (${p.minDays} dni)`))
-                                    ),
-                                    errors.prostheticId && e('div', { className: 'error-text' }, errors.prostheticId)
-                                ),
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Termin realizacji *'),
-                                    e('input', { 
-                                        type: 'date',
-                                        className: errors.deadline ? 'input error' : 'input',
-                                        value: formData.deadline,
-                                        min: new Date().toISOString().split('T')[0],
-                                        onChange: (ev) => setFormData({...formData, deadline: ev.target.value})
-                                    }),
-                                    errors.deadline && e('div', { className: 'error-text' }, errors.deadline)
-                                )
-                            ),
-                            e('div', { className: 'form-grid' },
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Numery zębów * (1-32)'),
-                                    e('input', { 
-                                        className: errors.teethNumbers ? 'input error' : 'input',
-                                        value: formData.teethNumbers,
-                                        onChange: (ev) => setFormData({...formData, teethNumbers: ev.target.value}),
-                                        placeholder: '14, 15, 16',
-                                        maxLength: 100
-                                    }),
-                                    errors.teethNumbers && e('div', { className: 'error-text' }, errors.teethNumbers)
-                                ),
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Materiał *'),
-                                    e('input', { 
-                                        className: errors.material ? 'input error' : 'input',
-                                        value: formData.material,
-                                        onChange: (ev) => setFormData({...formData, material: ev.target.value}),
-                                        placeholder: 'Porcelana IPS e.max',
-                                        maxLength: 200
-                                    }),
-                                    errors.material && e('div', { className: 'error-text' }, errors.material)
-                                )
-                            ),
-                            e('div', { className: 'form-group' },
-                                e('label', { className: 'form-label' }, 'Uwagi'),
-                                e('textarea', { 
-                                    className: 'textarea',
-                                    value: formData.notes,
-                                    onChange: (ev) => setFormData({...formData, notes: ev.target.value}),
-                                    maxLength: 1000
-                                })
+            const renderSimpleList = (items, type, title) => {
+                return e('div', { className: 'card' },
+                    e('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' } },
+                        e('h2', null, title),
+                        e('button', { className: 'btn btn-sm', onClick: () => { setModalType(type); setEditItem(null); setShowModal(true); } }, '➕ Dodaj')
+                    ),
+                    items.map(item => e('div', { key: item.id, className: 'list-item' },
+                        e('div', null,
+                            e('strong', null, item.name),
+                            e('div', { style: { fontSize: '0.85rem', color: '#6b7280' } }, 
+                                type === 'prosthetic' ? `Kod: ${item.gmlcCode} | Cena: ${item.price} zł` : 
+                                type === 'doctor' ? `Spec: ${item.specialty || 'Brak'}` : `Rola: ${item.position || item.service || 'Brak'}`
                             )
                         ),
-                        e('div', { className: 'modal-footer' },
-                            e('button', { className: 'btn btn-gray', onClick: () => { setShowModal(false); setEditItem(null); } }, 'Anuluj'),
-                            e('button', { className: 'btn', onClick: handleSave }, editItem ? 'Zapisz' : 'Dodaj')
+                        e('div', null,
+                            e('button', { className: 'btn btn-sm', style: {marginRight: '0.5rem'}, onClick: () => { setEditItem(item); setModalType(type); setShowModal(true); } }, '✏️'),
+                            e('button', { className: 'btn btn-sm btn-red', onClick: () => setShowConfirmDelete({ type, id: item.id }) }, '🗑️')
                         )
-                    )
-                );
-            };
-
-            const renderSimpleForm = (type) => {
-                const titles = {
-                    doctor: 'Lekarz', prosthetic: 'Uzupełnienie', 
-                    employee: 'Pracownik', supplier: 'Dostawca'
-                };
-                
-                const [formData, setFormData] = useState(editItem || {});
-
-                const handleSave = () => {
-                    if (type === 'doctor') {
-                        editItem ? updateDoctor(editItem.id, formData) : addDoctor(formData);
-                    } else if (type === 'prosthetic') {
-                        editItem ? updateProsthetic(editItem.id, formData) : addProsthetic(formData);
-                    } else if (type === 'employee') {
-                        editItem ? updateEmployee(editItem.id, formData) : addEmployee(formData);
-                    } else if (type === 'supplier') {
-                        editItem ? updateSupplier(editItem.id, formData) : addSupplier(formData);
-                    }
-                    setShowModal(false);
-                    setEditItem(null);
-                };
-
-                return e('div', { className: 'modal-overlay', onClick: (ev) => ev.target.className === 'modal-overlay' && setShowModal(false) },
-                    e('div', { className: 'modal' },
-                        e('div', { className: 'modal-header' },
-                            e('div', { className: 'modal-title' }, (editItem ? 'Edytuj ' : 'Dodaj ') + titles[type])
-                        ),
-                        e('div', { className: 'modal-body' },
-                            e('div', { className: 'form-group' },
-                                e('label', { className: 'form-label' }, 'Nazwa *'),
-                                e('input', { 
-                                    className: 'input',
-                                    value: formData.name || '',
-                                    onChange: (ev) => setFormData({...formData, name: ev.target.value}),
-                                    maxLength: 200
-                                })
-                            ),
-                            type === 'doctor' && e('div', null,
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Specjalizacja'),
-                                    e('input', { 
-                                        className: 'input',
-                                        value: formData.specialty || '',
-                                        onChange: (ev) => setFormData({...formData, specialty: ev.target.value})
-                                    })
-                                ),
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Telefon'),
-                                    e('input', { 
-                                        className: 'input',
-                                        value: formData.phone || '',
-                                        onChange: (ev) => setFormData({...formData, phone: ev.target.value})
-                                    })
-                                )
-                            ),
-                            type === 'prosthetic' && e('div', null,
-                                e('div', { className: 'form-grid' },
-                                    e('div', { className: 'form-group' },
-                                        e('label', { className: 'form-label' }, 'Kod GMLC *'),
-                                        e('input', { 
-                                            className: 'input',
-                                            value: formData.gmlcCode || '',
-                                            onChange: (ev) => setFormData({...formData, gmlcCode: ev.target.value})
-                                        })
-                                    ),
-                                    e('div', { className: 'form-group' },
-                                        e('label', { className: 'form-label' }, 'Min. dni *'),
-                                        e('input', { 
-                                            type: 'number',
-                                            className: 'input',
-                                            value: formData.minDays || '',
-                                            onChange: (ev) => setFormData({...formData, minDays: ev.target.value})
-                                        })
-                                    ),
-                                    e('div', { className: 'form-group' },
-                                        e('label', { className: 'form-label' }, 'Cena (zł) *'),
-                                        e('input', { 
-                                            type: 'number',
-                                            step: '0.01',
-                                            className: 'input',
-                                            value: formData.price || '',
-                                            onChange: (ev) => setFormData({...formData, price: ev.target.value})
-                                        })
-                                    )
-                                ),
-                                e('div', { className: 'form-group' },
-                                    e('label', { className: 'form-label' }, 'Etapy (oddzielone przecinkami)'),
-                                    e('input', { 
-                                        className: 'input',
-                                        value: formData.stages ? formData.stages.join(', ') : '',
-                                        onChange: (ev) => setFormData({...formData, stages: ev.target.value.split(',').map(s => s.trim()).filter(Boolean)}),
-                                        placeholder: 'Odlew, Szlifowanie, Porcelana'
-                                    })
-                                )
-                            ),
-                            type === 'employee' && e('div', { className: 'form-group' },
-                                e('label', { className: 'form-label' }, 'Stanowisko'),
-                                e('input', { 
-                                    className: 'input',
-                                    value: formData.position || '',
-                                    onChange: (ev) => setFormData({...formData, position: ev.target.value})
-                                })
-                            ),
-                            type === 'supplier' && e('div', { className: 'form-group' },
-                                e('label', { className: 'form-label' }, 'Usługa'),
-                                e('input', { 
-                                    className: 'input',
-                                    value: formData.service || '',
-                                    onChange: (ev) => setFormData({...formData, service: ev.target.value})
-                                })
-                            )
-                        ),
-                        e('div', { className: 'modal-footer' },
-                            e('button', { className: 'btn btn-gray', onClick: () => { setShowModal(false); setEditItem(null); } }, 'Anuluj'),
-                            e('button', { className: 'btn', onClick: handleSave }, editItem ? 'Zapisz' : 'Dodaj')
-                        )
-                    )
+                    ))
                 );
             };
 
             const renderOrders = () => {
-                const filtered = orders.filter(order => {
-                    if (!searchTerm) return true;
-                    const doctor = doctors.find(d => d.id === order.doctorId);
-                    const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
-                    const search = searchTerm.toLowerCase();
-                    return (order.patientCode || '').toLowerCase().includes(search) ||
-                           (doctor?.name || '').toLowerCase().includes(search) ||
-                           (prosthetic?.name || '').toLowerCase().includes(search);
-                });
-
-                const sorted = [...filtered].sort((a, b) => {
-                    if (sortBy === 'date') return new Date(b.createdAt) - new Date(a.createdAt);
-                    if (sortBy === 'deadline') return new Date(a.deadline) - new Date(b.deadline);
-                    return 0;
-                });
-
                 return e('div', null,
-                    e('div', { className: 'card' },
-                        e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' } },
-                            e('h2', { style: { margin: 0 } }, '📋 Zlecenia'),
-                            e('button', { className: 'btn', onClick: () => { setModalType('order'); setEditItem(null); setShowModal(true); } }, 
-                                '➕ Nowe zlecenie')
-                        ),
-                        e('div', { className: 'search-bar' },
-                            e('input', { 
-                                className: 'input search-input',
-                                placeholder: 'Szukaj po pacjencie, lekarzu...',
-                                value: searchTerm,
-                                onChange: (ev) => setSearchTerm(ev.target.value)
-                            }),
-                            e('select', { 
-                                className: 'select',
-                                value: sortBy,
-                                onChange: (ev) => setSortBy(ev.target.value)
-                            },
-                                e('option', { value: 'date' }, 'Sortuj: Data'),
-                                e('option', { value: 'deadline' }, 'Sortuj: Termin')
-                            )
-                        )
+                    e('div', { className: 'card', style: {display: 'flex', justifyContent: 'space-between', alignItems: 'center'} },
+                        e('h2', null, '📋 Zlecenia'),
+                        e('button', { className: 'btn', onClick: () => { setModalType('order'); setEditItem(null); setShowModal(true); } }, 'Nowe zlecenie')
                     ),
-                    sorted.map(order => {
-                        const doctor = doctors.find(d => d.id === order.doctorId);
-                        const prosthetic = prosthetics.find(p => p.id === order.prostheticId);
+                    orders.map(order => {
+                        const dr = doctors.find(d => d.id === Number(order.doctorId));
+                        const pr = prosthetics.find(p => p.id === Number(order.prostheticId));
                         const isOverdue = new Date(order.deadline) < new Date() && order.status !== 'Zakończone';
                         
-                        return e('div', { key: order.id, className: 'card', style: isOverdue ? { borderLeft: '4px solid #dc2626' } : {} },
-                            e('div', { className: 'list-header' },
-                                e('div', { style: { flex: 1 } },
-                                    e('div', { className: 'list-title' }, prosthetic?.name || 'Nieznany typ'),
-                                    e('div', { className: 'list-desc' }, `Lekarz: ${doctor?.name || 'Nieznany'}`),
-                                    e('div', { className: 'list-desc' }, `Pacjent: ${order.patientCode}`),
-                                    e('div', { className: 'list-desc' }, `Zęby: ${order.teethNumbers} • Cena: ${order.totalPrice} zł`),
-                                    e('div', { className: 'list-desc' }, `Termin: ${new Date(order.deadline).toLocaleDateString('pl-PL')}`),
-                                    isOverdue && e('div', { style: { color: '#dc2626', fontWeight: 600, marginTop: '0.25rem' } }, '⚠️ PRZEKROCZONY TERMIN')
+                        return e('div', { key: order.id, className: `card ${isOverdue ? 'overdue' : ''}` },
+                            e('div', { style: { display: 'flex', justifyContent: 'space-between' } },
+                                e('div', null,
+                                    e('h3', null, pr?.name || 'Nieznane uzupełnienie'),
+                                    e('p', null, `Pacjent: ${order.patientCode} | Lekarz: ${dr?.name || 'Nieprzypisany'}`),
+                                    e('p', { style: {fontSize: '0.85rem'} }, `Termin: ${order.deadline} | Zęby: ${order.teethNumbers}`)
                                 ),
-                                e('div', { className: 'list-actions' },
-                                    e('select', { 
-                                        className: 'select',
-                                        style: { minWidth: '150px' },
-                                        value: order.status,
-                                        onChange: (ev) => updateOrderStatus(order.id, ev.target.value)
-                                    },
-                                        e('option', { value: 'Nowe' }, 'Nowe'),
-                                        e('option', { value: 'W realizacji' }, 'W realizacji'),
-                                        e('option', { value: 'Przymiarka' }, 'Przymiarka'),
-                                        e('option', { value: 'Poprawki' }, 'Poprawki'),
-                                        e('option', { value: 'Gotowe do odbioru' }, 'Gotowe'),
-                                        e('option', { value: 'Zakończone' }, 'Zakończone')
-                                    ),
-                                    e('button', { className: 'btn btn-sm', onClick: () => { setEditItem(order); setModalType('order'); setShowModal(true); } }, '✏️'),
-                                    order.status === 'Zakończone' && !invoices.find(inv => inv.orderId === order.id) &&
-                                        e('button', { className: 'btn btn-sm btn-green', onClick: () => generateInvoice(order.id) }, '💰 Faktura'),
-                                    order.status === 'Zakończone' && !declarations.find(dec => dec.orderId === order.id) &&
-                                        e('button', { className: 'btn btn-sm btn-green', onClick: () => generateDeclaration(order.id) }, '📄 Oświadczenie'),
-                                    e('button', { className: 'btn btn-sm btn-red', onClick: () => setShowConfirmDelete({ type: 'order', id: order.id }) }, '🗑️')
-                                )
-                            ),
-                            order.stages && order.stages.length > 0 && e('div', { style: { marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' } },
-                                e('strong', { style: { display: 'block', marginBottom: '0.75rem' } }, 'Etapy produkcji:'),
-                                e('div', { className: 'stages' },
-                                    order.stages.map((stage, idx) => {
-                                        const progress = order.stageProgress?.[idx] || {};
-                                        return e('div', { key: idx, className: 'stage' },
-                                            e('div', { className: 'stage-name' }, `${idx + 1}. ${stage}`),
-                                            e('div', { className: 'stage-controls' },
-                                                e('select', {
-                                                    className: 'select',
-                                                    style: { minWidth: '150px' },
-                                                    value: progress.assignedTo || '',
-                                                    onChange: (ev) => updateOrderStage(order.id, idx, ev.target.value, progress.status || 'W trakcie')
-                                                },
-                                                    e('option', { value: '' }, 'Przypisz...'),
-                                                    employees.map(emp => e('option', { key: emp.id, value: emp.name }, emp.name)),
-                                                    suppliers.map(sup => e('option', { key: sup.id, value: sup.name + ' (d)' }, sup.name + ' (dostawca)'))
-                                                ),
-                                                e('select', {
-                                                    className: 'select',
-                                                    style: { minWidth: '130px' },
-                                                    value: progress.status || 'Nierozpoczęty',
-                                                    onChange: (ev) => updateOrderStage(order.id, idx, progress.assignedTo, ev.target.value)
-                                                },
-                                                    e('option', { value: 'Nierozpoczęty' }, 'Nierozpoczęty'),
-                                                    e('option', { value: 'W trakcie' }, 'W trakcie'),
-                                                    e('option', { value: 'Zakończony' }, 'Zakończony')
-                                                ),
-                                                e('span', { 
-                                                    className: `badge ${
-                                                        progress.status === 'Zakończony' ? 'badge-green' :
-                                                        progress.status === 'W trakcie' ? 'badge-yellow' : 'badge-blue'
-                                                    }`
-                                                }, progress.assignedTo || 'Brak')
-                                            )
-                                        );
-                                    })
+                                e('div', { style: { textAlign: 'right' } },
+                                    e('div', { className: 'badge badge-blue', style: {marginBottom: '0.5rem', display: 'inline-block'} }, order.status),
+                                    e('div', null,
+                                        e('button', { className: 'btn btn-sm btn-red', onClick: () => setShowConfirmDelete({type: 'order', id: order.id}) }, '🗑️')
+                                    )
                                 )
                             )
                         );
-                    }),
-                    sorted.length === 0 && e('div', { className: 'card' },
-                        e('p', { style: { textAlign: 'center', color: '#6b7280' } }, 
-                            'Brak zleceń. Dodaj pierwsze zlecenie!')
-                    )
+                    })
                 );
             };
 
-            const renderSimpleList = (items, type, title, deleteFn) => {
-                return e('div', { className: 'card' },
-                    e('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' } },
-                        e('h2', { style: { margin: 0 } }, title),
-                        e('button', { className: 'btn', onClick: () => { setModalType(type); setEditItem(null); setShowModal(true ); } },
-'➕ Dodaj')
-),
-e('input', {
-className: 'input',
-style: { marginBottom: '1.5rem' },
-placeholder: 'Szukaj...',
-value: searchTerm,
-onChange: (ev) => setSearchTerm(ev.target.value)
-}),
-items.filter(item => !searchTerm ||
-Object.values(item).some(v => String(v).toLowerCase().includes(searchTerm.toLowerCase()))
-).map(item => e('div', { key: item.id, className: 'list-item' },
-e('div', { style: { flex: 1 } },
-e('div', { className: 'list-title' }, item.name),
-item.specialty && e('div', { className: 'list-desc' }, Specjalizacja: ${item.specialty}),
-item.phone && e('div', { className: 'list-desc' }, Tel: ${item.phone}),
-item.gmlcCode && e('div', { className: 'list-desc' }, Kod: ${item.gmlcCode}),
-item.price && e('div', { className: 'list-desc' }, Cena: ${item.price} zł),
-item.minDays && e('div', { className: 'list-desc' }, Min. czas: ${item.minDays} dni),
-item.stages && e('div', { className: 'list-desc' }, Etapy: ${item.stages.join(', ')}),
-item.position && e('div', { className: 'list-desc' }, Stanowisko: ${item.position}),
-item.service && e('div', { className: 'list-desc' }, Usługa: ${item.service})
-),
-e('div', { className: 'list-actions' },
-e('button', { className: 'btn btn-sm', onClick: () => { setEditItem(item); setModalType(type); setShowModal(true); } }, '✏️ Edytuj'),
-e('button', { className: 'btn btn-sm btn-red', onClick: () => setShowConfirmDelete({ type, id: item.id }) }, '🗑️ Usuń')
-)
-)),
-items.length === 0 && e('p', { style: { textAlign: 'center', color: '#6b7280', padding: '2rem' } },
-Brak ${title.toLowerCase()}. Dodaj pierwszy!)
-);
-};
-const renderInvoices = () => {
-            return e('div', { className: 'card' },
-                e('h2', null, '💰 Faktury'),
-                invoices.map(inv => e('div', { key: inv.id, className: 'list-item' },
-                    e('div', { style: { flex: 1 } },
-                        e('div', { className: 'list-title' }, inv.invoiceNumber),
-                        e('div', { className: 'list-desc' }, `Lekarz: ${inv.doctor}`),
-                        e('div', { className: 'list-desc' }, `${inv.prostheticName} • ${inv.teethNumbers}`),
-                        e('div', { className: 'list-desc' }, `Data: ${new Date(inv.issueDate).toLocaleDateString('pl-PL')}`)
-                    ),
-                    e('div', { style: { textAlign: 'right' } },
-                        e('div', { style: { fontSize: '1.5rem', fontWeight: 'bold', color: '#1e3a8a' } }, 
-                            `${inv.amount.toFixed(2)} zł`),
-                        e('span', { className: 'badge badge-green' }, inv.status)
-                    )
-                )),
-                invoices.length === 0 && e('p', { style: { textAlign: 'center', color: '#6b7280', padding: '2rem' } }, 
-                    'Brak faktur. Faktury generują się automatycznie po zakończeniu zleceń.')
-            );
-        };
-
-        const renderDeclarations = () => {
             return e('div', null,
-                declarations.map(dec => e('div', { key: dec.id, className: 'card' },
-                    e('div', { className: 'list-header' },
-                        e('div', null,
-                            e('div', { className: 'list-title' }, dec.declarationNumber),
-                            e('div', { className: 'list-desc' }, `Pacjent: ${dec.patientCode}`),
-                            e('div', { className: 'list-desc' }, `Lekarz: ${dec.doctorName}`)
-                        ),
-                        e('div', { style: { textAlign: 'right' } },
-                            e('div', { className: 'list-desc' }, `Data: ${new Date(dec.issueDate).toLocaleDateString('pl-PL')}`)
-                        )
-                    ),
-                    e('div', { style: { marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' } },
-                        e('strong', null, 'Szczegóły uzupełnienia:'),
-                        e('div', { className: 'list-desc', style: { marginTop: '0.5rem' } }, `Typ: ${dec.prostheticName}`),
-                        e('div', { className: 'list-desc' }, `Kod GMLC: ${dec.gmlcCode}`),
-                        e('div', { className: 'list-desc' }, `Zęby: ${dec.teethNumbers}`),
-                        e('div', { className: 'list-desc' }, `Materiał: ${dec.material}`),
-                        e('div', { className: 'list-desc' }, `Ukończono: ${new Date(dec.completionDate).toLocaleDateString('pl-PL')}`)
-                    ),
-                    e('div', { className: 'alert alert-info', style: { marginTop: '1rem', fontSize: '0.75rem' } },
-                        e('strong', null, 'Oświadczenie: '),
-                        'Niniejsze uzupełnienie protetyczne zostało wykonane zgodnie ze zleceniem lekarza dentysty. Produkt spełnia wymogi określone w przepisach dotyczących wyrobów medycznych.'
-                    )
-                )),
-                declarations.length === 0 && e('div', { className: 'card' },
-                    e('p', { style: { textAlign: 'center', color: '#6b7280', padding: '2rem' } }, 
-                        'Brak oświadczeń. Oświadczenia generują się po zakończeniu zleceń.')
-                )
-            );
-        };
-
-        // Main render
-        if (!initialized) {
-            return e('div', { className: 'loading' },
-                e('div', { className: 'spinner' }),
-                e('p', { style: { marginTop: '1rem', color: '#6b7280' } }, 'Ładowanie systemu...')
-            );
-        }
-
-        return e('div', null,
-            notification && e('div', { className: `toast ${notification.type}` },
-                e('strong', null, notification.message)
-            ),
-            
-            e('nav', { className: 'nav' },
-                e('div', { className: 'nav-header' },
-                    e('h1', null, '🦷 System Pracowni Protetycznej'),
-                    e('div', { className: 'nav-buttons' },
-                        e('button', { className: 'nav-btn', onClick: exportData }, '⬇️ Eksport'),
-                        e('label', { className: 'nav-btn', style: { cursor: 'pointer' } },
-                            '⬆️ Import',
-                            e('input', { type: 'file', accept: '.json', style: { display: 'none' }, onChange: importData })
+                notification && e('div', { className: 'toast success' }, notification),
+                
+                e('nav', { className: 'nav' },
+                    e('div', { className: 'nav-header' }, e('h1', null, '🦷 DentalLab Pro')),
+                    e('div', { className: 'nav-tabs' },
+                        ['dashboard', 'orders', 'doctors', 'prosthetics', 'employees', 'suppliers'].map(tab => 
+                            e('button', { 
+                                key: tab, 
+                                className: `nav-tab ${activeTab === tab ? 'active' : ''}`, 
+                                onClick: () => setActiveTab(tab) 
+                            }, tab.charAt(0).toUpperCase() + tab.slice(1))
                         )
                     )
                 ),
-                e('div', { className: 'nav-tabs' },
-                    e('button', { className: activeTab === 'dashboard' ? 'nav-tab active' : 'nav-tab', onClick: () => { setActiveTab('dashboard'); setSearchTerm(''); } }, '📊 Dashboard'),
-                    e('button', { className: activeTab === 'orders' ? 'nav-tab active' : 'nav-tab', onClick: () => { setActiveTab('orders'); setSearchTerm(''); } }, '📋 Zlecenia'),
-                    e('button', { className: activeTab === 'doctors' ? 'nav-tab active' : 'nav-tab', onClick: () => { setActiveTab('doctors'); setSearchTerm(''); } }, '👨‍⚕️ Lekarze'),
-                    e('button', { className: activeTab === 'prosthetics' ? 'nav-tab active' : 'nav-tab', onClick: () => { setActiveTab('prosthetics'); setSearchTerm(''); } }, '🦷 Uzupełnienia'),
-                    e('button', { className: activeTab === 'employees' ? 'nav-tab active' : 'nav-tab', onClick: () => { setActiveTab('employees'); setSearchTerm(''); } }, '👷 Pracownicy'),
-                    e('button', { className: activeTab === 'suppliers' ? 'nav-tab active' : 'nav-tab', onClick: () => { setActiveTab('suppliers'); setSearchTerm(''); } }, '🚚 Dostawcy'),
-                    e('button', { className: activeTab === 'invoices' ? 'nav-tab active' : 'nav-tab', onClick: () => { setActiveTab('invoices'); setSearchTerm(''); } }, '💰 Faktury'),
-                    e('button', { className: activeTab === 'declarations' ? 'nav-tab active' : 'nav-tab', onClick: () => { setActiveTab('declarations'); setSearchTerm(''); } }, '📄 Oświadczenia')
-                )
-            ),
 
-            e('main', { className: 'main' },
-                activeTab === 'dashboard' && renderDashboard(),
-                activeTab === 'orders' && renderOrders(),
-                activeTab === 'doctors' && renderSimpleList(doctors, 'doctor', '👨‍⚕️ Lekarze', deleteDoctor),
-                activeTab === 'prosthetics' && renderSimpleList(prosthetics, 'prosthetic', '🦷 Uzupełnienia', deleteProsthetic),
-                activeTab === 'employees' && renderSimpleList(employees, 'employee', '👷 Pracownicy', deleteEmployee),
-                activeTab === 'suppliers' && renderSimpleList(suppliers, 'supplier', '🚚 Dostawcy', deleteSupplier),
-                activeTab === 'invoices' && renderInvoices(),
-                activeTab === 'declarations' && renderDeclarations()
-            ),
+                e('main', { className: 'main' },
+                    activeTab === 'dashboard' && renderDashboard(),
+                    activeTab === 'orders' && renderOrders(),
+                    activeTab === 'doctors' && renderSimpleList(doctors, 'doctor', 'Lekarze'),
+                    activeTab === 'prosthetics' && renderSimpleList(prosthetics, 'prosthetic', 'Uzupełnienia'),
+                    activeTab === 'employees' && renderSimpleList(employees, 'employee', 'Pracownicy'),
+                    activeTab === 'suppliers' && renderSimpleList(suppliers, 'supplier', 'Dostawcy')
+                ),
 
-            showModal && modalType === 'order' && renderOrderForm(),
-            showModal && (modalType === 'doctor' || modalType === 'prosthetic' || modalType === 'employee' || modalType === 'supplier') && renderSimpleForm(modalType),
-            
-            showConfirmDelete && e('div', { className: 'modal-overlay' },
-                e('div', { className: 'modal', style: { maxWidth: '400px' } },
-                    e('div', { className: 'modal-header' },
-                        e('div', { className: 'modal-title' }, '⚠️ Potwierdzenie usunięcia')
-                    ),
-                    e('div', { className: 'modal-body' },
-                        e('p', null, 'Czy na pewno chcesz usunąć ten element? Operacji nie można cofnąć.')
-                    ),
-                    e('div', { className: 'modal-footer' },
-                        e('button', { className: 'btn btn-gray', onClick: () => setShowConfirmDelete(null) }, 'Anuluj'),
-                        e('button', { className: 'btn btn-red', onClick: () => {
-                            const { type, id } = showConfirmDelete;
-                            if (type === 'order') deleteOrder(id);
-                            else if (type === 'doctor') deleteDoctor(id);
-                            else if (type === 'prosthetic') deleteProsthetic(id);
-                            else if (type === 'employee') deleteEmployee(id);
-                            else if (type === 'supplier') deleteSupplier(id);
-                        } }, 'Usuń')
+                showModal && e('div', { className: 'modal-overlay' },
+                    e('div', { className: 'modal' },
+                        e('h2', null, editItem ? 'Edytuj' : 'Dodaj'),
+                        e('div', { style: { marginTop: '1rem' } },
+                            modalType === 'order' ? e('div', null,
+                                e('label', { className: 'form-label' }, 'Kod Pacjenta'),
+                                e('input', { className: 'input', defaultValue: editItem?.patientCode, id: 'f_pc' }),
+                                e('label', { className: 'form-label' }, 'Lekarz'),
+                                e('select', { className: 'select', id: 'f_dr' }, doctors.map(d => e('option', { value: d.id }, d.name))),
+                                e('label', { className: 'form-label' }, 'Uzupełnienie'),
+                                e('select', { className: 'select', id: 'f_pr' }, prosthetics.map(p => e('option', { value: p.id }, p.name))),
+                                e('label', { className: 'form-label' }, 'Termin'),
+                                e('input', { type: 'date', className: 'input', id: 'f_dl' }),
+                                e('label', { className: 'form-label' }, 'Zęby'),
+                                e('input', { className: 'input', id: 'f_tn', placeholder: 'np. 12, 11' })
+                            ) : e('div', null,
+                                e('label', { className: 'form-label' }, 'Nazwa/Imię i Nazwisko'),
+                                e('input', { className: 'input', defaultValue: editItem?.name, id: 'f_name' }),
+                                modalType === 'prosthetic' && e('div', null,
+                                    e('label', { className: 'form-label' }, 'Cena'),
+                                    e('input', { type: 'number', className: 'input', id: 'f_price' }),
+                                    e('label', { className: 'form-label' }, 'Kod GMLC'),
+                                    e('input', { className: 'input', id: 'f_gmlc' })
+                                )
+                            )
+                        ),
+                        e('div', { style: { marginTop: '1.5rem', display: 'flex', gap: '0.5rem' } },
+                            e('button', { className: 'btn', onClick: () => {
+                                const newData = { id: editItem?.id || Date.now() };
+                                if (modalType === 'order') {
+                                    newData.patientCode = document.getElementById('f_pc').value;
+                                    newData.doctorId = document.getElementById('f_dr').value;
+                                    newData.prostheticId = document.getElementById('f_pr').value;
+                                    newData.deadline = document.getElementById('f_dl').value;
+                                    newData.teethNumbers = document.getElementById('f_tn').value;
+                                    newData.status = 'Nowe';
+                                    const updated = editItem ? orders.map(o => o.id === editItem.id ? newData : o) : [...orders, newData];
+                                    save('orders', updated, setOrders);
+                                } else {
+                                    newData.name = document.getElementById('f_name').value;
+                                    if(modalType === 'prosthetic') {
+                                        newData.price = Number(document.getElementById('f_price').value);
+                                        newData.gmlcCode = document.getElementById('f_gmlc').value;
+                                    }
+                                    const list = modalType === 'doctor' ? doctors : modalType === 'prosthetic' ? prosthetics : modalType === 'employee' ? employees : suppliers;
+                                    const setter = modalType === 'doctor' ? setDoctors : modalType === 'prosthetic' ? setProsthetics : modalType === 'employee' ? setEmployees : setSuppliers;
+                                    const updated = editItem ? list.map(i => i.id === editItem.id ? newData : i) : [...list, newData];
+                                    save(modalType + 's', updated, setter);
+                                }
+                                setShowModal(false);
+                                notify('Zapisano pomyślnie');
+                            }}, 'Zapisz'),
+                            e('button', { className: 'btn btn-red', onClick: () => setShowModal(false) }, 'Anuluj')
+                        )
+                    )
+                ),
+
+                showConfirmDelete && e('div', { className: 'modal-overlay' },
+                    e('div', { className: 'modal', style: {maxWidth: '400px'} },
+                        e('h2', null, 'Potwierdź usunięcie'),
+                        e('p', null, 'Czy na pewno chcesz usunąć ten element?'),
+                        e('div', { style: {marginTop: '1.5rem', display: 'flex', gap: '0.5rem'} },
+                            e('button', { className: 'btn btn-red', onClick: handleDelete }, 'Usuń'),
+                            e('button', { className: 'btn', onClick: () => setShowConfirmDelete(null) }, 'Anuluj')
+                        )
                     )
                 )
-            )
-        );
-    }
+            );
+        }
 
-    ReactDOM.render(e(DentalLabSystem), document.getElementById('root'));
-</script>
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(e(DentalLabSystem));
+    </script>
 </body>
 </html>
-```
